@@ -9,6 +9,8 @@ export async function GET(req: NextRequest) {
   const next = searchParams.get('next') ?? '/'
 
   if (code) {
+    const redirectRes = NextResponse.redirect(`${origin}${next}`)
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -18,9 +20,10 @@ export async function GET(req: NextRequest) {
             return req.cookies.getAll()
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
+            for (const { name, value, options } of cookiesToSet) {
               req.cookies.set(name, value)
-            })
+              redirectRes.cookies.set(name, value, options)
+            }
           },
         },
       }
@@ -29,7 +32,7 @@ export async function GET(req: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+      return redirectRes
     }
   }
 

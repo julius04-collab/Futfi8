@@ -1,10 +1,28 @@
 {
   "crons": [
-    { "path": "/api/cron/poll-matches", "schedule": "*/2 * * * *" },
-    { "path": "/api/cron/close-raids", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/open-threads", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/close-match-threads", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/daily-cred-recalc", "schedule": "0 0 * * *" },
-    { "path": "/api/cron/weekly-digest", "schedule": "0 8 * * 1" }
+    {
+      "path": "/api/cron/poll-matches",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/close-raids",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/open-threads",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/close-match-threads",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/daily-cred-recalc",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-digest",
+      "schedule": "0 8 * * 1"
+    }
   ]
 }

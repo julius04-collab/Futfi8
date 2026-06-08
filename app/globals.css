@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@import "../TOKENS/variables.css";
+
+@theme inline {
+  --color-background: var(--futfi8-color-background-base);
+  --color-foreground: var(--futfi8-color-text-primary);
+  --font-sans: 'Plus Jakarta Sans', 'DM Sans', Inter, system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Bebas Neue', Impact, sans-serif;
+  --font-label: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
+}
+
+body {
+  background: var(--futfi8-color-background-base);
+  color: var(--futfi8-color-text-primary);
+  font-family: var(--futfi8-typography-font-family-body);
+}

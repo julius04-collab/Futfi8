@@ -1,0 +1,1 @@
+export { MatchThreadCard } from './MatchThreadCard'

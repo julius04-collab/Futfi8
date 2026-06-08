@@ -1,0 +1,351 @@
+{
+  "$metadata": {
+    "product": "Futfi8",
+    "version": "1.0.0",
+    "description": "Futfi8 design token system — dark, aggressive, electric purple. The football. The fight.",
+    "tokenSets": [
+      "typography",
+      "spacing",
+      "radius",
+      "elevation",
+      "motion",
+      "breakpoints"
+    ]
+  },
+
+  "typography": {
+    "$description": "Futfi8 type system — three roles: Display (loud), Body (readable), Label (system state)",
+
+    "fontFamily": {
+      "display": {
+        "$value": "'Barlow Condensed', 'Bebas Neue', Impact, sans-serif",
+        "$type": "fontFamily",
+        "$description": "Headlines, locker room names, raid announcements, scorelines. Heavy and aggressive."
+      },
+      "body": {
+        "$value": "'Plus Jakarta Sans', 'DM Sans', Inter, system-ui, sans-serif",
+        "$type": "fontFamily",
+        "$description": "Posts, takes, comments, descriptions. Clean and readable on dark backgrounds."
+      },
+      "label": {
+        "$value": "'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace",
+        "$type": "fontFamily",
+        "$description": "Raid countdowns, system states, timestamps, match stats. Technical and precise."
+      }
+    },
+
+    "fontWeight": {
+      "regular": {
+        "$value": "400",
+        "$type": "fontWeight",
+        "$description": "Body text, comments, secondary labels"
+      },
+      "medium": {
+        "$value": "500",
+        "$type": "fontWeight",
+        "$description": "UI labels, badge text, nav items"
+      },
+      "semibold": {
+        "$value": "600",
+        "$type": "fontWeight",
+        "$description": "Post author names, club names in feeds"
+      },
+      "bold": {
+        "$value": "700",
+        "$type": "fontWeight",
+        "$description": "Display headings, raid banners, match results"
+      },
+      "extrabold": {
+        "$value": "800",
+        "$type": "fontWeight",
+        "$description": "Hero wordmark, scoreline display, maximum impact moments"
+      }
+    },
+
+    "fontSize": {
+      "xs": {
+        "$value": "11px",
+        "$type": "dimension",
+        "$description": "Timestamps, metadata, fine print"
+      },
+      "sm": {
+        "$value": "12px",
+        "$type": "dimension",
+        "$description": "Badge labels, captions, helper text"
+      },
+      "base": {
+        "$value": "14px",
+        "$type": "dimension",
+        "$description": "Body copy, post text, comments"
+      },
+      "md": {
+        "$value": "16px",
+        "$type": "dimension",
+        "$description": "Primary body text, input fields"
+      },
+      "lg": {
+        "$value": "18px",
+        "$type": "dimension",
+        "$description": "Section headings, card titles"
+      },
+      "xl": {
+        "$value": "22px",
+        "$type": "dimension",
+        "$description": "Locker room name, screen titles"
+      },
+      "2xl": {
+        "$value": "28px",
+        "$type": "dimension",
+        "$description": "Match score display, large headings"
+      },
+      "3xl": {
+        "$value": "36px",
+        "$type": "dimension",
+        "$description": "Raid announcement banner, hero text"
+      },
+      "4xl": {
+        "$value": "48px",
+        "$type": "dimension",
+        "$description": "Display headlines, wordmark"
+      },
+      "5xl": {
+        "$value": "64px",
+        "$type": "dimension",
+        "$description": "Scoreline hero, max impact display"
+      }
+    },
+
+    "lineHeight": {
+      "tight": {
+        "$value": "1.1",
+        "$type": "number",
+        "$description": "Display and headline text — condensed, aggressive"
+      },
+      "snug": {
+        "$value": "1.3",
+        "$type": "number",
+        "$description": "Card titles, short labels"
+      },
+      "normal": {
+        "$value": "1.5",
+        "$type": "number",
+        "$description": "UI elements, navigation"
+      },
+      "relaxed": {
+        "$value": "1.65",
+        "$type": "number",
+        "$description": "Body copy, post content — readable at length"
+      },
+      "loose": {
+        "$value": "1.8",
+        "$type": "number",
+        "$description": "Long-form text, onboarding copy"
+      }
+    },
+
+    "letterSpacing": {
+      "tight": {
+        "$value": "-0.03em",
+        "$type": "number",
+        "$description": "Display type — tight tracking for aggressive headlines"
+      },
+      "normal": {
+        "$value": "0em",
+        "$type": "number",
+        "$description": "Body text default"
+      },
+      "wide": {
+        "$value": "0.05em",
+        "$type": "number",
+        "$description": "Slightly spaced — club names in headers"
+      },
+      "wider": {
+        "$value": "0.08em",
+        "$type": "number",
+        "$description": "Label text spacing"
+      },
+      "widest": {
+        "$value": "0.12em",
+        "$type": "number",
+        "$description": "Uppercase system labels — raid countdown, match status"
+      }
+    },
+
+    "textCase": {
+      "upper": {
+        "$value": "uppercase",
+        "$type": "textCase",
+        "$description": "System labels, status badges, tab labels"
+      },
+      "none": {
+        "$value": "none",
+        "$type": "textCase",
+        "$description": "Default for body and display"
+      }
+    },
+
+    "textDecoration": {
+      "none": {
+        "$value": "none",
+        "$type": "textDecoration"
+      },
+      "underline": {
+        "$value": "underline",
+        "$type": "textDecoration",
+        "$description": "Links in body text only"
+      }
+    },
+
+    "scale": {
+      "$description": "Semantic type scale — use these composites in code, not raw tokens above",
+
+      "display-hero": {
+        "fontFamily": { "$value": "{typography.fontFamily.display}" },
+        "fontSize": { "$value": "{typography.fontSize.4xl}" },
+        "fontWeight": { "$value": "{typography.fontWeight.extrabold}" },
+        "lineHeight": { "$value": "{typography.lineHeight.tight}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.tight}" },
+        "$description": "Wordmark, top-level hero moments"
+      },
+      "display-lg": {
+        "fontFamily": { "$value": "{typography.fontFamily.display}" },
+        "fontSize": { "$value": "{typography.fontSize.3xl}" },
+        "fontWeight": { "$value": "{typography.fontWeight.bold}" },
+        "lineHeight": { "$value": "{typography.lineHeight.tight}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.tight}" },
+        "$description": "Raid banners, locker room headers"
+      },
+      "display-md": {
+        "fontFamily": { "$value": "{typography.fontFamily.display}" },
+        "fontSize": { "$value": "{typography.fontSize.2xl}" },
+        "fontWeight": { "$value": "{typography.fontWeight.bold}" },
+        "lineHeight": { "$value": "{typography.lineHeight.snug}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.tight}" },
+        "$description": "Match scorelines, section heads"
+      },
+      "heading-lg": {
+        "fontFamily": { "$value": "{typography.fontFamily.body}" },
+        "fontSize": { "$value": "{typography.fontSize.xl}" },
+        "fontWeight": { "$value": "{typography.fontWeight.semibold}" },
+        "lineHeight": { "$value": "{typography.lineHeight.snug}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.normal}" },
+        "$description": "Screen titles, locker room name in header"
+      },
+      "heading-md": {
+        "fontFamily": { "$value": "{typography.fontFamily.body}" },
+        "fontSize": { "$value": "{typography.fontSize.lg}" },
+        "fontWeight": { "$value": "{typography.fontWeight.semibold}" },
+        "lineHeight": { "$value": "{typography.lineHeight.normal}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.normal}" },
+        "$description": "Card headings, section titles"
+      },
+      "body-lg": {
+        "fontFamily": { "$value": "{typography.fontFamily.body}" },
+        "fontSize": { "$value": "{typography.fontSize.md}" },
+        "fontWeight": { "$value": "{typography.fontWeight.regular}" },
+        "lineHeight": { "$value": "{typography.lineHeight.relaxed}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.normal}" },
+        "$description": "Primary post content, takes, comments"
+      },
+      "body-sm": {
+        "fontFamily": { "$value": "{typography.fontFamily.body}" },
+        "fontSize": { "$value": "{typography.fontSize.base}" },
+        "fontWeight": { "$value": "{typography.fontWeight.regular}" },
+        "lineHeight": { "$value": "{typography.lineHeight.relaxed}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.normal}" },
+        "$description": "Secondary body, reply text"
+      },
+      "label-lg": {
+        "fontFamily": { "$value": "{typography.fontFamily.label}" },
+        "fontSize": { "$value": "{typography.fontSize.sm}" },
+        "fontWeight": { "$value": "{typography.fontWeight.medium}" },
+        "lineHeight": { "$value": "{typography.lineHeight.normal}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.widest}" },
+        "textCase": { "$value": "{typography.textCase.upper}" },
+        "$description": "Raid countdown timer, live match indicator, system status"
+      },
+      "label-sm": {
+        "fontFamily": { "$value": "{typography.fontFamily.label}" },
+        "fontSize": { "$value": "{typography.fontSize.xs}" },
+        "fontWeight": { "$value": "{typography.fontWeight.medium}" },
+        "lineHeight": { "$value": "{typography.lineHeight.normal}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.wider}" },
+        "textCase": { "$value": "{typography.textCase.upper}" },
+        "$description": "Timestamps, match stats, metadata"
+      },
+      "badge": {
+        "fontFamily": { "$value": "{typography.fontFamily.body}" },
+        "fontSize": { "$value": "{typography.fontSize.xs}" },
+        "fontWeight": { "$value": "{typography.fontWeight.medium}" },
+        "lineHeight": { "$value": "{typography.lineHeight.normal}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.wide}" },
+        "textCase": { "$value": "{typography.textCase.upper}" },
+        "$description": "Raid badge, member badge, hot take tag"
+      }
+    }
+  },
+
+  "spacing": {
+    "$description": "4px base unit spacing scale",
+    "0": { "$value": "0px", "$type": "dimension" },
+    "1": { "$value": "4px", "$type": "dimension", "$description": "Micro — icon padding, tight gaps" },
+    "2": { "$value": "8px", "$type": "dimension", "$description": "XS — inline gaps, badge padding" },
+    "3": { "$value": "12px", "$type": "dimension", "$description": "SM — list item padding" },
+    "4": { "$value": "16px", "$type": "dimension", "$description": "Base — card internal padding, input padding" },
+    "5": { "$value": "20px", "$type": "dimension", "$description": "MD — section gaps" },
+    "6": { "$value": "24px", "$type": "dimension", "$description": "LG — card padding, modal padding" },
+    "8": { "$value": "32px", "$type": "dimension", "$description": "XL — between sections" },
+    "10": { "$value": "40px", "$type": "dimension", "$description": "2XL — screen-level vertical rhythm" },
+    "12": { "$value": "48px", "$type": "dimension", "$description": "3XL — hero sections" },
+    "16": { "$value": "64px", "$type": "dimension", "$description": "4XL — page-level spacing" }
+  },
+
+  "borderRadius": {
+    "none": { "$value": "0px", "$type": "dimension" },
+    "sm": { "$value": "4px", "$type": "dimension", "$description": "Subtle rounding — small chips, tags" },
+    "md": { "$value": "8px", "$type": "dimension", "$description": "Default — buttons, inputs, small cards" },
+    "lg": { "$value": "12px", "$type": "dimension", "$description": "Cards, panels, modals" },
+    "xl": { "$value": "16px", "$type": "dimension", "$description": "Bottom sheets, large cards" },
+    "2xl": { "$value": "24px", "$type": "dimension", "$description": "Floating elements, app icons" },
+    "full": { "$value": "9999px", "$type": "dimension", "$description": "Pills, avatar circles, toggle tracks" }
+  },
+
+  "elevation": {
+    "$description": "Futfi8 is dark-first — elevation is expressed through background lightness, not shadows",
+    "base": {
+      "background": { "$value": "#0D0D0F", "$description": "App base layer — pitch black" }
+    },
+    "surface": {
+      "background": { "$value": "#1A1A2E", "$description": "Cards, locker room panels" }
+    },
+    "elevated": {
+      "background": { "$value": "#1E1E32", "$description": "Modals, dropdowns, bottom sheets" }
+    },
+    "overlay": {
+      "background": { "$value": "rgba(0, 0, 0, 0.72)", "$description": "Modal backdrop, raid overlay" }
+    }
+  },
+
+  "motion": {
+    "$description": "Animation and transition values",
+    "duration": {
+      "instant": { "$value": "80ms", "$type": "duration", "$description": "Button press feedback" },
+      "fast": { "$value": "150ms", "$type": "duration", "$description": "Hover states, badge swaps" },
+      "base": { "$value": "250ms", "$type": "duration", "$description": "Most UI transitions" },
+      "slow": { "$value": "400ms", "$type": "duration", "$description": "Screen transitions, modals" },
+      "raid": { "$value": "600ms", "$type": "duration", "$description": "Raid banner entrance — punchy" }
+    },
+    "easing": {
+      "default": { "$value": "cubic-bezier(0.4, 0, 0.2, 1)", "$description": "Standard ease in-out" },
+      "enter": { "$value": "cubic-bezier(0, 0, 0.2, 1)", "$description": "Elements entering the screen" },
+      "exit": { "$value": "cubic-bezier(0.4, 0, 1, 1)", "$description": "Elements leaving the screen" },
+      "spring": { "$value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "$description": "Raid banner, celebration moments — slight overshoot" }
+    }
+  },
+
+  "breakpoints": {
+    "mobile": { "$value": "390px", "$description": "Primary target — most users on mobile" },
+    "tablet": { "$value": "768px", "$description": "Tablet / large phone landscape" },
+    "desktop": { "$value": "1024px", "$description": "Web version breakpoint" }
+  }
+}

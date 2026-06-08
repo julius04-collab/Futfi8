@@ -1,0 +1,177 @@
+{
+    "futfi8": {
+        "color": {
+            "brand": {
+                "pitch-black": {
+                    "value": "#0D0D0F",
+                    "description": "Primary background — the darkest surface, used for main screens and cards"
+                },
+                "electric-purple": {
+                    "value": "#9B6EFF",
+                    "description": "Primary accent — active states, raid windows, hot takes, CTA buttons"
+                },
+                "deep-purple": {
+                    "value": "#6B3FCC",
+                    "description": "Pressed/hover state for electric purple — buttons and interactive elements"
+                },
+                "midnight": {
+                    "value": "#1A1A2E",
+                    "description": "Secondary background — elevated surfaces, cards, modals"
+                },
+                "muted-steel": {
+                    "value": "#3D3D4E",
+                    "description": "Tertiary surface — input backgrounds, disabled states, dividers"
+                },
+                "pure-white": {
+                    "value": "#FFFFFF",
+                    "description": "Primary text on dark backgrounds"
+                }
+            },
+            "text": {
+                "primary": {
+                    "value": "#FFFFFF",
+                    "description": "Headlines, display text, primary UI labels"
+                },
+                "secondary": {
+                    "value": "#CCCCCC",
+                    "description": "Body copy, descriptions, secondary labels"
+                },
+                "muted": {
+                    "value": "#888888",
+                    "description": "Timestamps, placeholders, tertiary information"
+                },
+                "accent": {
+                    "value": "#9B6EFF",
+                    "description": "Links, active labels, raid countdowns, electric moments"
+                },
+                "inverse": {
+                    "value": "#0D0D0F",
+                    "description": "Text on light/purple backgrounds"
+                }
+            },
+            "background": {
+                "base": {
+                    "value": "#0D0D0F",
+                    "description": "App base — the pitch. Deepest layer."
+                },
+                "surface": {
+                    "value": "#1A1A2E",
+                    "description": "Cards, locker room panels, modals"
+                },
+                "elevated": {
+                    "value": "#1E1E32",
+                    "description": "Floating elements, dropdowns, bottom sheets"
+                },
+                "input": {
+                    "value": "#3D3D4E",
+                    "description": "Text input fields, search bars"
+                },
+                "raid-active": {
+                    "value": "#1E1040",
+                    "description": "Background tint when a raid window is open"
+                },
+                "raid-highlight": {
+                    "value": "#2A1A5E",
+                    "description": "Highlighted raid posts inside a locker room"
+                }
+            },
+            "border": {
+                "default": {
+                    "value": "#222228",
+                    "description": "Default card and panel borders"
+                },
+                "subtle": {
+                    "value": "#2A2A3A",
+                    "description": "Inner dividers, list separators"
+                },
+                "accent": {
+                    "value": "#9B6EFF",
+                    "description": "Active/focused border — selected club, active tab"
+                },
+                "raid": {
+                    "value": "#3A2A7A",
+                    "description": "Border on raid post cards"
+                }
+            },
+            "state": {
+                "raid-open": {
+                    "value": "#9B6EFF",
+                    "description": "Raid window is active — used for timers, banners, entry indicators"
+                },
+                "win": {
+                    "value": "#4CAF82",
+                    "description": "Match won — positive result state"
+                },
+                "loss": {
+                    "value": "#FF6B6B",
+                    "description": "Match lost — locker room under raid threat"
+                },
+                "draw": {
+                    "value": "#888888",
+                    "description": "Match drawn — neutral result, no raid triggered"
+                },
+                "live": {
+                    "value": "#FF4444",
+                    "description": "Match is live — pulse indicator on match thread"
+                }
+            },
+            "ui": {
+                "cta-primary": {
+                    "value": "#9B6EFF",
+                    "description": "Primary button background"
+                },
+                "cta-primary-pressed": {
+                    "value": "#6B3FCC",
+                    "description": "Primary button pressed state"
+                },
+                "cta-text": {
+                    "value": "#FFFFFF",
+                    "description": "Text on primary buttons"
+                },
+                "badge-member": {
+                    "background": "#1E1040",
+                    "text": "#9B6EFF",
+                    "description": "Club member badge"
+                },
+                "badge-raid": {
+                    "background": "#9B6EFF",
+                    "text": "#FFFFFF",
+                    "description": "Raid active badge"
+                },
+                "badge-hot-take": {
+                    "background": "#1A1A2E",
+                    "border": "#2a1a5e",
+                    "text": "#9B6EFF",
+                    "description": "Hot take label badge"
+                },
+                "badge-loss": {
+                    "background": "#1A0A0A",
+                    "border": "#3a1a1a",
+                    "text": "#FF6B6B",
+                    "description": "Loss state badge — locker room under raid"
+                }
+            }
+        },
+        "typography": {
+            "display": {
+                "font-weight": "700",
+                "letter-spacing": "-0.03em",
+                "color": "#FFFFFF",
+                "usage": "Match headlines, raid announcements, locker room names"
+            },
+            "body": {
+                "font-weight": "400",
+                "line-height": "1.6",
+                "color": "#CCCCCC",
+                "usage": "Posts, takes, comments, descriptions"
+            },
+            "label": {
+                "font-weight": "500",
+                "text-transform": "uppercase",
+                "letter-spacing": "0.1em",
+                "color": "#9B6EFF",
+                "usage": "Raid countdowns, system states, tab labels"
+            }
+        }
+    }
+}

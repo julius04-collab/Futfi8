@@ -17,6 +17,7 @@
   --futfi8-color-brand-pitch-black: #0D0D0F;
   --futfi8-color-brand-electric-purple: #9B6EFF;
   --futfi8-color-brand-deep-purple: #6B3FCC;
+  --futfi8-color-brand-soft-purple: #A78BFA;
   --futfi8-color-brand-midnight: #1A1A2E;
   --futfi8-color-brand-muted-steel: #3D3D4E;
   --futfi8-color-brand-pure-white: #FFFFFF;
@@ -26,6 +27,7 @@
   --futfi8-color-text-secondary: #CCCCCC;
   --futfi8-color-text-muted: #888888;
   --futfi8-color-text-accent: var(--futfi8-color-brand-electric-purple);
+  --futfi8-color-text-accent-muted: var(--futfi8-color-brand-soft-purple);
   --futfi8-color-text-inverse: var(--futfi8-color-brand-pitch-black);
   --futfi8-color-background-base: var(--futfi8-color-brand-pitch-black);
   --futfi8-color-background-surface: var(--futfi8-color-brand-midnight);
@@ -36,6 +38,7 @@
   --futfi8-color-border-default: #222228;
   --futfi8-color-border-subtle: #2A2A3A;
   --futfi8-color-border-accent: var(--futfi8-color-brand-electric-purple);
+  --futfi8-color-border-accent-muted: var(--futfi8-color-brand-soft-purple);
   --futfi8-color-border-raid: #3A2A7A;
   --futfi8-color-state-raid-open: var(--futfi8-color-brand-electric-purple);
   --futfi8-color-state-win: #4CAF82;
@@ -44,6 +47,7 @@
   --futfi8-color-state-live: #FF4444;
   --futfi8-color-ui-cta-primary: var(--futfi8-color-brand-electric-purple);
   --futfi8-color-ui-cta-primary-pressed: var(--futfi8-color-brand-deep-purple);
+  --futfi8-color-ui-cta-muted: var(--futfi8-color-brand-soft-purple);
   --futfi8-color-ui-cta-text: var(--futfi8-color-brand-pure-white);
   --futfi8-color-ui-badge-member-background: #1E1040;
   --futfi8-color-ui-badge-member-text: var(--futfi8-color-brand-electric-purple);
@@ -72,8 +76,8 @@
   /* TYPOGRAPHY                                                                   */
   /* ========================================================================== */
 
-  --futfi8-typography-font-family-display: 'Barlow Condensed', 'Bebas Neue', Impact, sans-serif;
-  --futfi8-typography-font-family-body: 'Plus Jakarta Sans', 'DM Sans', Inter, system-ui, sans-serif;
+  --futfi8-typography-font-family-display: 'DM Sans', 'Barlow Condensed', 'Bebas Neue', Impact, sans-serif;
+  --futfi8-typography-font-family-body: 'Inter', 'DM Sans', system-ui, sans-serif;
   --futfi8-typography-font-family-label: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
   --futfi8-typography-font-weight-regular: 400;
   --futfi8-typography-font-weight-medium: 500;
@@ -108,17 +112,17 @@
   --futfi8-typography-scale-display-hero-font-size: var(--futfi8-typography-font-size-4xl);
   --futfi8-typography-scale-display-hero-font-weight: var(--futfi8-typography-font-weight-extrabold);
   --futfi8-typography-scale-display-hero-line-height: var(--futfi8-typography-line-height-tight);
-  --futfi8-typography-scale-display-hero-letter-spacing: var(--futfi8-typography-letter-spacing-tight);
+  --futfi8-typography-scale-display-hero-letter-spacing: var(--futfi8-typography-letter-spacing-normal);
   --futfi8-typography-scale-display-lg-font-family: var(--futfi8-typography-font-family-display);
   --futfi8-typography-scale-display-lg-font-size: var(--futfi8-typography-font-size-3xl);
   --futfi8-typography-scale-display-lg-font-weight: var(--futfi8-typography-font-weight-bold);
   --futfi8-typography-scale-display-lg-line-height: var(--futfi8-typography-line-height-tight);
-  --futfi8-typography-scale-display-lg-letter-spacing: var(--futfi8-typography-letter-spacing-tight);
+  --futfi8-typography-scale-display-lg-letter-spacing: var(--futfi8-typography-letter-spacing-normal);
   --futfi8-typography-scale-display-md-font-family: var(--futfi8-typography-font-family-display);
   --futfi8-typography-scale-display-md-font-size: var(--futfi8-typography-font-size-2xl);
   --futfi8-typography-scale-display-md-font-weight: var(--futfi8-typography-font-weight-bold);
   --futfi8-typography-scale-display-md-line-height: var(--futfi8-typography-line-height-snug);
-  --futfi8-typography-scale-display-md-letter-spacing: var(--futfi8-typography-letter-spacing-tight);
+  --futfi8-typography-scale-display-md-letter-spacing: var(--futfi8-typography-letter-spacing-normal);
   --futfi8-typography-scale-heading-lg-font-family: var(--futfi8-typography-font-family-body);
   --futfi8-typography-scale-heading-lg-font-size: var(--futfi8-typography-font-size-xl);
   --futfi8-typography-scale-heading-lg-font-weight: var(--futfi8-typography-font-weight-semibold);

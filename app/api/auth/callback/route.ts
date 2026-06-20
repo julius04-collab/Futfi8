@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  const next = searchParams.get('next') ?? '/hot-takes'
 
   if (code) {
     const redirectRes = NextResponse.redirect(`${origin}${next}`)

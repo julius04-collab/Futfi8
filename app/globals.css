@@ -4,9 +4,31 @@
 @theme inline {
   --color-background: var(--futfi8-color-background-base);
   --color-foreground: var(--futfi8-color-text-primary);
-  --font-sans: 'Plus Jakarta Sans', 'DM Sans', Inter, system-ui, sans-serif;
-  --font-display: 'Barlow Condensed', 'Bebas Neue', Impact, sans-serif;
+  --color-accent: var(--futfi8-color-text-accent);
+  --color-accent-muted: var(--futfi8-color-text-accent-muted);
+  --color-muted: var(--futfi8-color-text-muted);
+  --color-inverse: var(--futfi8-color-text-inverse);
+  --color-secondary: var(--futfi8-color-text-secondary);
+  --color-border: var(--futfi8-color-border-default);
+  --color-surface: var(--futfi8-color-background-surface);
+  --color-deep-purple: var(--futfi8-color-brand-deep-purple);
+  --font-sans: 'Inter', 'DM Sans', system-ui, sans-serif;
+  --font-display: 'DM Sans', 'Barlow Condensed', 'Bebas Neue', Impact, sans-serif;
   --font-label: 'Space Mono', 'JetBrains Mono', 'IBM Plex Mono', monospace;
+
+  --tracking-tight: 0em;
+  --tracking-tighter: 0em;
+  --color-accent-gradient: var(--futfi8-color-brand-deep-purple);
+}
+
+:root {
+  --accent-rgb: 167, 139, 250;
+}
+
+@layer base {
+  h1, h2, h3 {
+    letter-spacing: var(--futfi8-typography-letter-spacing-normal);
+  }
 }
 
 body {

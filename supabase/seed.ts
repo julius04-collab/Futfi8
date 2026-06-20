@@ -39,7 +39,7 @@ const CLUBS: ClubSeed[] = [
   { name: 'Aston Villa',         short_name: 'AVL', primary_color: '#670E36', secondary_color: '#95BFE5', api_football_team_id: 66,  crest_url: '/images/crests/aston-villa.png' },
   { name: 'Bournemouth',         short_name: 'BOU', primary_color: '#DA291C', secondary_color: '#000000', api_football_team_id: 35,  crest_url: '/images/crests/bournemouth.png' },
   { name: 'Brentford',           short_name: 'BRE', primary_color: '#E30613', secondary_color: '#FBB800', api_football_team_id: 55,  crest_url: '/images/crests/brentford.png' },
-  { name: 'Brighton',            short_name: 'BHA', primary_color: '#0057B8', secondary_color: '#FFCD00', api_football_team_id: 51,  crest_url: '/images/crests/brighton.png' },
+  { name: 'Brighton & Hove Albion', short_name: 'BHA', primary_color: '#0057B8', secondary_color: '#FFCD00', api_football_team_id: 51,  crest_url: '/images/crests/brighton.png' },
   { name: 'Chelsea',             short_name: 'CHE', primary_color: '#034694', secondary_color: '#DBA111', api_football_team_id: 49,  crest_url: '/images/crests/chelsea.png' },
   { name: 'Coventry City',       short_name: 'COV', primary_color: '#5EB6E4', secondary_color: '#FFFFFF', api_football_team_id: 571, crest_url: '/images/crests/coventry-city.png' },
   { name: 'Crystal Palace',      short_name: 'CRY', primary_color: '#1B458F', secondary_color: '#C4122E', api_football_team_id: 52,  crest_url: '/images/crests/crystal-palace.png' },

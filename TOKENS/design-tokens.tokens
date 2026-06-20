@@ -18,12 +18,12 @@
 
     "fontFamily": {
       "display": {
-        "$value": "'Barlow Condensed', 'Bebas Neue', Impact, sans-serif",
+        "$value": "'DM Sans', 'Barlow Condensed', 'Bebas Neue', Impact, sans-serif",
         "$type": "fontFamily",
         "$description": "Headlines, locker room names, raid announcements, scorelines. Heavy and aggressive."
       },
       "body": {
-        "$value": "'Plus Jakarta Sans', 'DM Sans', Inter, system-ui, sans-serif",
+        "$value": "'Inter', 'DM Sans', system-ui, sans-serif",
         "$type": "fontFamily",
         "$description": "Posts, takes, comments, descriptions. Clean and readable on dark backgrounds."
       },
@@ -204,7 +204,7 @@
         "fontSize": { "$value": "{typography.fontSize.4xl}" },
         "fontWeight": { "$value": "{typography.fontWeight.extrabold}" },
         "lineHeight": { "$value": "{typography.lineHeight.tight}" },
-        "letterSpacing": { "$value": "{typography.letterSpacing.tight}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.normal}" },
         "$description": "Wordmark, top-level hero moments"
       },
       "display-lg": {
@@ -212,7 +212,7 @@
         "fontSize": { "$value": "{typography.fontSize.3xl}" },
         "fontWeight": { "$value": "{typography.fontWeight.bold}" },
         "lineHeight": { "$value": "{typography.lineHeight.tight}" },
-        "letterSpacing": { "$value": "{typography.letterSpacing.tight}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.normal}" },
         "$description": "Raid banners, locker room headers"
       },
       "display-md": {
@@ -220,7 +220,7 @@
         "fontSize": { "$value": "{typography.fontSize.2xl}" },
         "fontWeight": { "$value": "{typography.fontWeight.bold}" },
         "lineHeight": { "$value": "{typography.lineHeight.snug}" },
-        "letterSpacing": { "$value": "{typography.letterSpacing.tight}" },
+        "letterSpacing": { "$value": "{typography.letterSpacing.normal}" },
         "$description": "Match scorelines, section heads"
       },
       "heading-lg": {

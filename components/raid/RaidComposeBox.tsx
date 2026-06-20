@@ -78,16 +78,10 @@ export function RaidComposeBox({ username, avatarUrl, raidWindowId, defendingLoc
   }
 
   return (
-    <div
-      className="flex gap-3 px-4 py-3"
-      style={{
-        borderBottom: '1px solid var(--futfi8-color-border-raid)',
-        background: 'rgba(155,110,255,0.04)',
-      }}
-    >
+    <div className="flex gap-3 p-4 border-b border-slate-800/60">
       <Avatar src={avatarUrl} name={username} size={36} />
       <div className="flex-1 min-w-0">
-        <p className="mb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--futfi8-color-text-accent)' }}>
+        <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-accent">
           Raid Post — one shot
         </p>
         <textarea
@@ -98,53 +92,27 @@ export function RaidComposeBox({ username, avatarUrl, raidWindowId, defendingLoc
           onKeyDown={handleKeyDown}
           rows={1}
           maxLength={MAX_RAID_POST_LENGTH}
-          style={{
-            width: '100%',
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--futfi8-color-text-primary)',
-            fontSize: '14px',
-            lineHeight: 1.5,
-            outline: 'none',
-            resize: 'none',
-            fontFamily: 'inherit',
-          }}
+          className="w-full bg-transparent border-none text-sm leading-relaxed outline-none resize-none text-white placeholder-slate-500"
         />
         {error && (
-          <p className="mt-1 text-xs" style={{ color: 'var(--futfi8-color-state-loss)' }}>
-            {error}
-          </p>
+          <p className="mt-1 text-xs text-red-400">{error}</p>
         )}
         <div className="mt-2 flex items-center justify-between">
           <span
-            className="text-xs"
-            style={{
-              color: isOverLimit
-                ? 'var(--futfi8-color-state-loss)'
-                : 'var(--futfi8-color-text-muted)',
-            }}
+            className={`text-xs ${isOverLimit ? 'text-red-400' : 'text-slate-500'}`}
           >
             {charsLeft}
           </span>
           <button
             onClick={handleSubmit}
             disabled={!content.trim() || posting || isOverLimit}
-            style={{
-              padding: '6px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: content.trim() && !posting && !isOverLimit
-                ? 'var(--futfi8-color-state-raid-open)'
-                : 'var(--futfi8-color-background-input)',
-              color: content.trim() && !posting && !isOverLimit
-                ? '#fff'
-                : 'var(--futfi8-color-text-muted)',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: content.trim() && !posting && !isOverLimit ? 'pointer' : 'not-allowed',
-              transition: 'all 0.15s',
-              opacity: posting ? 0.6 : 1,
-            }}
+            className={`
+              rounded-full font-bold px-4 py-1.5 text-sm transition-all
+              ${content.trim() && !posting && !isOverLimit
+                ? 'bg-purple-600 text-white cursor-pointer opacity-100'
+                : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}
+              ${posting ? 'opacity-60' : ''}
+            `}
           >
             {posting ? 'Posting...' : 'Raid!'}
           </button>

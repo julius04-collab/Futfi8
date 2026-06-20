@@ -149,21 +149,13 @@ export default function HotTakesPage() {
         </h1>
       </div>
 
-      <div
-        className="flex gap-3 border-b px-4 py-3"
-        style={{ borderColor: 'var(--futfi8-color-border-subtle)' }}
-      >
+      <div className="flex gap-3 p-4 border-b border-slate-800/60">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Drop a hot take..."
           rows={2}
-          className="min-h-[44px] flex-1 resize-none rounded-lg px-3 py-2 text-sm outline-none"
-          style={{
-            background: 'var(--futfi8-color-background-input)',
-            color: 'var(--futfi8-color-text-primary)',
-            border: '1px solid var(--futfi8-color-border-default)',
-          }}
+          className="min-h-[44px] flex-1 resize-none rounded-lg px-3 py-2 text-sm outline-none bg-slate-900/50 border border-slate-800 text-white placeholder-slate-500"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
@@ -174,11 +166,7 @@ export default function HotTakesPage() {
         <button
           onClick={handleSubmit}
           disabled={!content.trim()}
-          className="shrink-0 self-end rounded-lg px-4 py-2 text-sm font-semibold transition-opacity disabled:opacity-40"
-          style={{
-            background: 'var(--futfi8-color-brand-electric-purple)',
-            color: '#fff',
-          }}
+          className="shrink-0 self-end bg-accent text-background font-bold text-sm px-4 py-1.5 rounded-full hover:opacity-90 transition-all disabled:opacity-40"
         >
           Post
         </button>

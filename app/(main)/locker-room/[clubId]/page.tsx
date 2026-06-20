@@ -44,38 +44,45 @@ export default function LockerRoomPage() {
   const { raid: activeRaid, loading: raidLoading } = useActiveRaid(clubId, profile?.id ?? null)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      Promise.all([
-        supabase
-          .from('clubs')
-          .select('id, name, short_name, primary_color, secondary_color')
-          .eq('id', clubId)
-          .single(),
-        supabase
-          .from('users')
-          .select('id, username, avatar_url, home_club_id')
-          .eq('id', user.id)
-          .single(),
-        supabase
-          .from('locker_rooms')
-          .select('id')
-          .eq('club_id', clubId)
-          .single(),
-      ]).then(([clubRes, profileRes, roomRes]) => {
-        if (clubRes.error || !clubRes.data) {
-          router.push('/hot-takes')
+    supabase.auth
+      .getUser()
+      .then(({ data: { user } }) => {
+        if (!user) {
+          router.push('/login')
           return
         }
-        setClub(clubRes.data)
-        setProfile(profileRes.data)
-        if (roomRes.data) setLockerRoomId(roomRes.data.id)
-      }).finally(() => setLoading(false))
-    })
+
+        Promise.all([
+          supabase
+            .from('clubs')
+            .select('id, name, short_name, primary_color, secondary_color')
+            .eq('id', clubId)
+            .single(),
+          supabase
+            .from('users')
+            .select('id, username, avatar_url, home_club_id')
+            .eq('id', user.id)
+            .single(),
+          supabase
+            .from('locker_rooms')
+            .select('id')
+            .eq('club_id', clubId)
+            .single(),
+        ])
+          .then(([clubRes, profileRes, roomRes]) => {
+            if (clubRes.error || !clubRes.data) {
+              router.push('/hot-takes')
+              return
+            }
+            setClub(clubRes.data)
+            setProfile(profileRes.data)
+            if (roomRes.data) setLockerRoomId(roomRes.data.id)
+          })
+          .finally(() => setLoading(false))
+      })
+      .catch(() => {
+        router.push('/login')
+      })
   }, [clubId, router])
 
   const handlePost = useCallback(async (content: string) => {

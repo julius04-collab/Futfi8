@@ -50,5 +50,15 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|Images|favicon.ico|login|register|auth|$).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - crests (local asset paths)
+     * - public landing root (the '/' exception string entry)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|crests|^/$).*)',
+  ],
 }

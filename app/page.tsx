@@ -168,27 +168,13 @@ function Nav() {
 
 function Hero() {
   return (
-    <section id="top" className="relative isolate overflow-hidden bg-black">
-      <div className="absolute inset-0 -z-10">
-        <img
-          src="/Images/hero-tunnel.jpg"
-          alt=""
-          className="h-full w-full object-cover opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-accent-muted/15 via-black/60 to-black" />
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: [
-              'linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px)',
-              'linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)',
-            ].join(', '),
-            backgroundSize: '60px 60px',
-          }}
-        />
-      </div>
+    <section
+      id="top"
+      className="relative min-h-[85vh] flex flex-col justify-between bg-[url('/Images/hero-tunnel.jpg')] bg-cover bg-center bg-black"
+    >
+      <div className="absolute inset-0 bg-black/60" />
 
-      <div className="mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 sm:pt-32 lg:pb-32 lg:pt-40">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between px-4 pb-24 pt-28 sm:px-6 sm:pt-32 lg:pb-32 lg:pt-40">
         <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.3em] text-accent-muted">
           <span className="h-px w-8 bg-accent-muted" />
           Pre-launch · Premier League · 20 clubs

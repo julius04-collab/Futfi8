@@ -268,8 +268,9 @@ function RaidSection() {
     <section id="raid" className="relative border-b border-slate-800/60 bg-black py-24 sm:py-32">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20">
         <div className="relative">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-slate-800/60 bg-gradient-to-br from-slate-900 to-black">
-            <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-slate-800/60 bg-[url('/images/players/saka.jpg')] bg-cover bg-center">
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+            <div className="relative z-10 flex h-full items-center justify-center">
               <div className="text-center p-8">
                 <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent-muted">Raid · Live</div>
                 <div className="mt-4 font-display text-3xl text-white sm:text-4xl leading-tight">
@@ -282,7 +283,6 @@ function RaidSection() {
                 </div>
               </div>
             </div>
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black to-transparent" />
           </div>
           <div className="absolute -right-3 -top-3 rotate-3 bg-accent-muted px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-white">
             Raid window open

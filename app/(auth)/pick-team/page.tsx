@@ -64,9 +64,15 @@ export default function PickTeamPage() {
     setSaving(true)
     setError('')
 
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token
+
     const res = await fetch('/api/users/me', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ home_club_id: selectedClubId }),
     })
 
@@ -142,7 +148,7 @@ export default function PickTeamPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           {clubs.map((club) => {
             const isSelected = selectedClubId === club.id
             return (

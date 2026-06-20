@@ -66,6 +66,7 @@ function ClubCrest({ club, size = 44 }: { club: Club; size?: number }) {
 
   return (
     <div
+<<<<<<< Updated upstream
       className="flex items-center justify-center rounded-sm shrink-0 overflow-hidden"
       style={{
         width: size,
@@ -75,6 +76,10 @@ function ClubCrest({ club, size = 44 }: { club: Club; size?: number }) {
           : 'transparent',
       }}
       aria-label={club.name}
+=======
+      className="flex min-h-full flex-1 flex-col items-center px-4 pt-32 md:justify-center md:pt-0"
+      style={{ background: 'var(--futfi8-color-background-base)' }}
+>>>>>>> Stashed changes
     >
       {crestPath && !imgError ? (
         <img
@@ -174,7 +179,7 @@ function Hero() {
     >
       <div className="absolute inset-0 bg-black/60" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between px-4 pb-24 pt-28 sm:px-6 sm:pt-32 lg:pb-32 lg:pt-40">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between px-4 pb-24 pt-36 sm:px-6 sm:pt-32 lg:pb-32 lg:pt-40">
         <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-tighter whitespace-nowrap text-accent-muted">
           <span className="h-px w-8 bg-accent-muted shrink-0" />
           Pre-launch | Premier League | 20 clubs

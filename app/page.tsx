@@ -175,9 +175,9 @@ function Hero() {
       <div className="absolute inset-0 bg-black/60" />
 
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between px-4 pb-24 pt-28 sm:px-6 sm:pt-32 lg:pb-32 lg:pt-40">
-        <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.3em] text-accent-muted">
-          <span className="h-px w-8 bg-accent-muted" />
-          Pre-launch · Premier League · 20 clubs
+        <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-tighter whitespace-nowrap text-accent-muted">
+          <span className="h-px w-8 bg-accent-muted shrink-0" />
+          Pre-launch | Premier League | 20 clubs
         </div>
 
         <h1 className="mt-6 font-display text-6xl text-white sm:text-8xl lg:text-[10rem] leading-[0.9]">

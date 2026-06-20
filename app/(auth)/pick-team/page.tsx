@@ -47,7 +47,7 @@ export default function PickTeamPage() {
             return 0
           })
           .filter((club) => {
-            const key = club.name.toLowerCase()
+            const key = club.short_name.toLowerCase()
             if (seen.has(key)) return false
             seen.add(key)
             return true

@@ -8,7 +8,7 @@ export default async function proxy(req: NextRequest) {
 
   const isRoot = pathname === '/'
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
-  const isStatic = pathname.startsWith('/_next') || pathname.startsWith('/Images') || pathname === '/favicon.ico'
+  const isStatic = pathname.startsWith('/_next') || pathname.startsWith('/images') || pathname.startsWith('/Images') || pathname === '/favicon.ico'
   const isApi = pathname.startsWith('/api')
 
   if (isRoot || isPublic || isStatic || isApi) {
@@ -56,10 +56,11 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
+     * - images (static image assets)
      * - crests (local club badge graphics)
      * - favicon.ico (favicon file)
      * - Root path: end-of-string anchor after leading /
      */
-    '/((?!api|_next/static|_next/image|crests|favicon.ico|$).*)',
+    '/((?!api|_next/static|_next/image|images|crests|favicon.ico|$).*)',
   ],
 }

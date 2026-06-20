@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   const { data: profile } = await supabaseAdmin
     .from('users')
-    .select('*, home_club:clubs(*)')
+    .select('*, home_club:clubs!home_club_id(*)')
     .eq('id', user.id)
     .single()
 
@@ -46,7 +46,7 @@ export async function PATCH(req: NextRequest) {
     .from('users')
     .update(updates)
     .eq('id', user.id)
-    .select('*, home_club:clubs(*)')
+    .select('*, home_club:clubs!home_club_id(*)')
     .single()
 
   if (error) {

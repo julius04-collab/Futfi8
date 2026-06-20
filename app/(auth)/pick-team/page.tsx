@@ -38,7 +38,14 @@ export default function PickTeamPage() {
       if (fetchError) {
         setError(fetchError.message)
       } else if (data) {
-        setClubs(data)
+        const seen = new Set<string>()
+        const unique = data.filter((club) => {
+          const key = club.name.toLowerCase()
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+        setClubs(unique)
       }
       setLoading(false)
     }

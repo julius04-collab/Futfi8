@@ -556,7 +556,13 @@ function WaitlistSection() {
 
     const { error: insertError } = await supabase
       .from('waitlist')
-      .insert({ username, email, selected_club: club })
+      .insert([
+        {
+          email,
+          username,
+          selected_club: club,
+        },
+      ])
 
     setLoading(false)
 

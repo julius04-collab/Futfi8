@@ -269,18 +269,16 @@ function RaidSection() {
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20">
         <div className="relative">
           <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-slate-800/60 bg-[url('/Images/players/saka.jpg')] bg-cover bg-center">
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-            <div className="relative z-10 flex h-full items-center justify-center">
-              <div className="text-center p-8">
-                <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent-muted">Raid · Live</div>
-                <div className="mt-4 font-display text-3xl text-white sm:text-4xl leading-tight">
-                  &ldquo;Pack it up, Spurs.&rdquo;
-                </div>
-                <div className="mt-4 flex items-center justify-center gap-3 text-xs text-slate-500">
-                  <span>by @kojo_gunner · ARS</span>
-                  <span>·</span>
-                  <span>1h 41m left on the door</span>
-                </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+            <div className="relative z-10 flex h-full flex-col justify-end items-start p-8 md:p-12">
+              <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent-muted">Raid · Live</div>
+              <div className="mt-3 font-display text-3xl text-white sm:text-4xl leading-tight">
+                &ldquo;Pack it up, Spurs.&rdquo;
+              </div>
+              <div className="mt-3 flex items-center gap-3 text-xs text-slate-500 mb-1">
+                <span>by @kojo_gunner · ARS</span>
+                <span>·</span>
+                <span>1h 41m left on the door</span>
               </div>
             </div>
           </div>

@@ -58,7 +58,7 @@ export const config = {
      * - _next/image (image optimization files)
      * - crests (local club badge graphics)
      * - favicon.ico (favicon file)
-     * - Root path: $ (end-of-string after leading /, matches exactly just the home domain)
+     * - Root path: end-of-string anchor after leading /
      */
     '/((?!api|_next/static|_next/image|crests|favicon.ico|$).*)',
   ],

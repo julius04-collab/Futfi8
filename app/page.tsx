@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import heroBg from '../lovable-ref/src/assets/hero-tunnel.jpg'
+
 
 type Club = {
   id: string
@@ -171,7 +171,7 @@ function Hero() {
     <section id="top" className="relative isolate overflow-hidden bg-black">
       <div className="absolute inset-0 -z-10">
         <img
-          src={typeof heroBg === 'string' ? heroBg : heroBg.src}
+          src="/images/hero-tunnel.jpg"
           alt=""
           className="h-full w-full object-cover opacity-40"
         />

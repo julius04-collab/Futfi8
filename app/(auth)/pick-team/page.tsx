@@ -40,12 +40,18 @@ export default function PickTeamPage() {
         setError(fetchError.message)
       } else if (data) {
         const seen = new Set<string>()
-        const unique = data.filter((club) => {
-          const key = club.name.toLowerCase()
-          if (seen.has(key)) return false
-          seen.add(key)
-          return true
-        })
+        const unique = data
+          .sort((a, b) => {
+            if (a.crest_url && !b.crest_url) return -1
+            if (!a.crest_url && b.crest_url) return 1
+            return 0
+          })
+          .filter((club) => {
+            const key = club.name.toLowerCase()
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+          })
         setClubs(unique)
       }
       setLoading(false)

@@ -148,14 +148,14 @@ export default function PickTeamPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-5 gap-3">
           {clubs.map((club) => {
             const isSelected = selectedClubId === club.id
             return (
               <button
                 key={club.id}
                 onClick={() => setSelectedClubId(club.id)}
-                className="flex flex-col items-center gap-2 rounded-lg px-3 py-4 text-center transition-all duration-150"
+                className="flex flex-col items-center gap-1.5 rounded-lg px-2 py-3 text-center transition-all duration-150"
                 style={{
                   background: isSelected
                     ? `${club.primary_color}20`
@@ -169,12 +169,12 @@ export default function PickTeamPage() {
                   <img
                     src={club.crest_url}
                     alt={club.short_name}
-                    className="h-10 w-10 object-contain"
+                    className="h-8 w-8 object-contain"
                     onError={() => setBrokenImages((prev) => new Set(prev).add(club.id))}
                   />
                 ) : (
                   <div
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
                     style={{
                       background: club.primary_color,
                       color: club.secondary_color || '#fff',

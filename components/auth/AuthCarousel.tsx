@@ -29,7 +29,7 @@ export function AuthCarousel() {
         <p className="font-display text-3xl md:text-4xl font-normal tracking-wide text-foreground leading-snug">
           Futfi8.
           <br />
-            <span className="bg-gradient-to-r from-accent to-accent-gradient bg-clip-text text-transparent">
+            <span className="text-zinc-300">
             The football. The fight.
           </span>
         </p>

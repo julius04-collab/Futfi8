@@ -523,6 +523,7 @@ function HotTakeSection() {
 
 function WaitlistSection() {
   const [club, setClub] = useState<string>('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -540,6 +541,11 @@ function WaitlistSection() {
       return
     }
 
+    if (!username.trim()) {
+      alert('Please enter a username handle!')
+      return
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       setEmailError('Enter a valid email address')
@@ -550,7 +556,7 @@ function WaitlistSection() {
 
     const { error: insertError } = await supabase
       .from('waitlist')
-      .insert({ email, selected_club: club })
+      .insert({ username, email, selected_club: club })
 
     setLoading(false)
 
@@ -629,8 +635,28 @@ function WaitlistSection() {
               </div>
 
               <div>
+                <label htmlFor="username" className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                  02 · Your username
+                </label>
+                <div className="relative mt-3">
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-mono text-sm text-slate-500">
+                    @
+                  </span>
+                  <input
+                    id="username"
+                    type="text"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="kojo_gunner"
+                    className="w-full rounded-sm border border-slate-800/60 bg-black px-4 py-3 pl-8 text-sm text-white placeholder:text-slate-600 focus:border-accent-muted focus:outline-none transition"
+                  />
+                </div>
+              </div>
+
+              <div>
                 <label htmlFor="email" className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">
-                  02 · Your email
+                  03 · Your email
                 </label>
                 <input
                   id="email"
@@ -663,7 +689,7 @@ function WaitlistSection() {
 
               <button
                 type="submit"
-                disabled={!email || loading}
+                disabled={!username || !email || loading}
                 className="group flex w-full items-center justify-between rounded-sm bg-accent-muted px-5 py-4 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-accent-muted disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-600"
               >
                 <span>{loading ? 'Submitting...' : 'Lock in my room'}</span>

@@ -32,6 +32,7 @@
   ],
   "exclude": [
     "node_modules",
+    "lovable-ref",
     "vitest.config.ts",
     "tests"
   ]

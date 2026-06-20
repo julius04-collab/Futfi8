@@ -4,6 +4,7 @@ import { useState, FormEvent, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
+
 type Club = {
   id: string
   name: string
@@ -12,16 +13,44 @@ type Club = {
   secondary_color: string
 }
 
+const CREST_MAP: Record<string, string> = {
+  'Arsenal': 'arsenal',
+  'Aston Villa': 'aston-villa',
+  'Bournemouth': 'bournemouth',
+  'Brentford': 'brentford',
+  'Brighton & Hove Albion': 'brighton',
+  'Chelsea': 'chelsea',
+  'Coventry City': 'coventry-city',
+  'Crystal Palace': 'crystal-palace',
+  'Everton': 'everton',
+  'Fulham': 'fulham',
+  'Hull City': 'hull-city',
+  'Ipswich Town': 'ipswich-town',
+  'Leeds United': 'leeds-united',
+  'Liverpool': 'liverpool',
+  'Manchester City': 'manchester-city',
+  'Manchester United': 'manchester-united',
+  'Newcastle United': 'newcastle-united',
+  'Nottingham Forest': 'nottingham-forest',
+  'Sunderland A.F.C.': 'sunderland',
+  'Tottenham Hotspur': 'tottenham-hotspur',
+}
+
+function crestUrl(clubName: string) {
+  const slug = CREST_MAP[clubName]
+  return slug ? `/Images/crests/${slug}.png` : null
+}
+
 export default function RegisterPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [registerStep, setRegisterStep] = useState(1)
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [homeClubId, setHomeClubId] = useState('')
-  const [isUnder16, setIsUnder16] = useState(false)
   const [clubs, setClubs] = useState<Club[]>([])
   const [error, setError] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [clubsLoading, setClubsLoading] = useState(true)
 
@@ -40,12 +69,38 @@ export default function RegisterPage() {
     fetchClubs()
   }, [])
 
+  function validateStep1(): boolean {
+    const errs: Record<string, string> = {}
+
+    if (!username.trim() || username.trim().length < 3) {
+      errs.username = 'Username must be at least 3 characters'
+    }
+    if (!email.trim()) {
+      errs.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errs.email = 'Enter a valid email address'
+    }
+    if (!password || password.length < 6) {
+      errs.password = 'Password must be at least 6 characters'
+    }
+
+    setFieldErrors(errs)
+    return Object.keys(errs).length === 0
+  }
+
+  function handleContinue() {
+    if (validateStep1()) {
+      setRegisterStep(2)
+    }
+  }
+
   async function handleRegister(e: FormEvent) {
     e.preventDefault()
     setError('')
+    setFieldErrors({})
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (!homeClubId) {
+      setFieldErrors({ club: 'Please select your home club' })
       return
     }
 
@@ -56,9 +111,9 @@ export default function RegisterPage() {
       password,
       options: {
         data: {
-          username,
-          home_club_id: homeClubId || null,
-          is_under_16: isUnder16,
+          username: username.trim(),
+          home_club_id: homeClubId,
+          is_under_16: false,
         },
       },
     })
@@ -80,131 +135,149 @@ export default function RegisterPage() {
         <p className="mt-1 text-sm text-muted">Join the community</p>
       </div>
 
-      <div
-        className="rounded-xl p-6"
-        style={{
-          background: 'var(--futfi8-color-background-surface)',
-          border: '1px solid var(--futfi8-color-border-default)',
-        }}
-      >
-        <h2 className="mb-6 text-center text-lg font-normal text-foreground">Create account</h2>
+      <div className="rounded-xl border border-zinc-800 bg-black p-6">
+        <div className="mb-6 flex items-center justify-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${registerStep === 1 ? 'bg-purple-500' : 'bg-zinc-700'}`} />
+          <span className="h-px w-8 bg-zinc-800" />
+          <span className={`h-2 w-2 rounded-full ${registerStep === 2 ? 'bg-purple-500' : 'bg-zinc-700'}`} />
+        </div>
+
+        <h2 className="mb-6 text-center text-lg font-normal text-foreground">
+          {registerStep === 1 ? 'Your details' : 'Pick your club'}
+        </h2>
 
         {error && (
-          <div
-            className="mb-4 rounded-lg px-4 py-2 text-sm"
-            style={{
-              background: 'rgba(255,107,107,0.1)',
-              border: '1px solid rgba(255,107,107,0.3)',
-              color: 'var(--futfi8-color-state-loss)',
-            }}
-          >
+          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-950/10 px-4 py-2 text-sm text-red-400">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleRegister} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Username</label>
-            <input
-              type="text"
-              placeholder="Choose a username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              minLength={3}
-              className="border border-slate-800 bg-slate-900/40 text-white rounded-md h-11 px-4 focus:border-accent focus:ring-1 focus:ring-accent w-full outline-none transition-all placeholder:text-sm placeholder-slate-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Email</label>
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="border border-slate-800 bg-slate-900/40 text-white rounded-md h-11 px-4 focus:border-accent focus:ring-1 focus:ring-accent w-full outline-none transition-all placeholder:text-sm placeholder-slate-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Password</label>
-            <div className="relative">
+        {registerStep === 1 && (
+          <div className="flex flex-col gap-5">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Username</label>
               <input
-                type={showPassword ? 'text' : 'password'}
+                type="text"
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => { setUsername(e.target.value); setFieldErrors((p) => { const n = { ...p }; delete n.username; return n }) }}
+                className={`w-full rounded-lg border bg-black px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-all focus:ring-1 ${
+                  fieldErrors.username
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30'
+                    : 'border-zinc-800 focus:border-purple-500 focus:ring-purple-500/30'
+                }`}
+                autoFocus
+              />
+              {fieldErrors.username && (
+                <p className="mt-1.5 text-xs text-red-400">{fieldErrors.username}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Email</label>
+              <input
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => { const n = { ...p }; delete n.email; return n }) }}
+                className={`w-full rounded-lg border bg-black px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-all focus:ring-1 ${
+                  fieldErrors.email
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30'
+                    : 'border-zinc-800 focus:border-purple-500 focus:ring-purple-500/30'
+                }`}
+              />
+              {fieldErrors.email && (
+                <p className="mt-1.5 text-xs text-red-400">{fieldErrors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Password</label>
+              <input
+                type="password"
                 placeholder="Min. 6 characters"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="border border-slate-800 bg-slate-900/40 text-white rounded-md h-11 px-4 pr-10 focus:border-accent focus:ring-1 focus:ring-accent w-full outline-none transition-all placeholder:text-sm placeholder-slate-500"
+                onChange={(e) => { setPassword(e.target.value); setFieldErrors((p) => { const n = { ...p }; delete n.password; return n }) }}
+                className={`w-full rounded-lg border bg-black px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none transition-all focus:ring-1 ${
+                  fieldErrors.password
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30'
+                    : 'border-zinc-800 focus:border-purple-500 focus:ring-purple-500/30'
+                }`}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-              >
-                {showPassword ? (
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                  </svg>
-                ) : (
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                )}
-              </button>
+              {fieldErrors.password && (
+                <p className="mt-1.5 text-xs text-red-400">{fieldErrors.password}</p>
+              )}
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Home club</label>
+            <button
+              type="button"
+              onClick={handleContinue}
+              className="w-full rounded-lg bg-purple-600 py-3 text-sm font-medium text-white transition-all hover:bg-purple-500"
+            >
+              Continue
+            </button>
+          </div>
+        )}
+
+        {registerStep === 2 && (
+          <form onSubmit={handleRegister} className="flex flex-col gap-5">
             {clubsLoading ? (
-              <div className="flex items-center justify-center border border-slate-800 bg-slate-900/40 text-muted rounded-md h-11 px-4 text-sm">
-                Loading clubs...
-              </div>
+              <div className="flex items-center justify-center py-12 text-sm text-zinc-500">Loading clubs...</div>
             ) : (
-              <select
-                value={homeClubId}
-                onChange={(e) => setHomeClubId(e.target.value)}
-                className="border border-slate-800 bg-slate-900/40 text-white rounded-md h-11 px-4 focus:border-accent focus:ring-1 focus:ring-accent w-full outline-none transition-all"
-              >
-                <option value="">Pick your club</option>
-                {clubs.map((club) => (
-                  <option key={club.id} value={club.id}>
-                    {club.name}
-                  </option>
-                ))}
-              </select>
+              <div className="grid grid-cols-4 gap-2.5">
+                {clubs.map((club) => {
+                  const isSelected = homeClubId === club.id
+                  const crest = crestUrl(club.name)
+                  return (
+                    <button
+                      key={club.id}
+                      type="button"
+                      onClick={() => { setHomeClubId(club.id); setFieldErrors({}) }}
+                      className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 transition-all ${
+                        isSelected
+                          ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500'
+                          : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-600'
+                      }`}
+                    >
+                      <div
+                        className="flex items-center justify-center rounded-sm overflow-hidden"
+                        style={{ width: 40, height: 40 }}
+                      >
+                        {crest ? (
+                          <img src={crest} alt={club.short_name} className="h-full w-full object-contain" />
+                        ) : (
+                          <span className="font-display text-xs text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+                            {club.short_name?.slice(0, 3).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-medium text-zinc-400 leading-tight text-center">
+                        {club.short_name}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
             )}
-          </div>
 
-          <label className="flex cursor-pointer items-center gap-3 py-1">
-            <input
-              type="checkbox"
-              checked={isUnder16}
-              onChange={(e) => setIsUnder16(e.target.checked)}
-              className="h-4 w-4 rounded"
-              style={{ accentColor: 'var(--futfi8-color-brand-electric-purple)' }}
-            />
-            <span className="text-sm text-muted">I am under 16 years old</span>
-          </label>
+            {fieldErrors.club && (
+              <p className="text-xs text-red-400 text-center -mt-2">{fieldErrors.club}</p>
+            )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-accent text-background font-black tracking-wide uppercase h-12 rounded-md hover:opacity-90 transition-all w-full disabled:opacity-50"
-          >
-            {loading ? 'Creating account...' : 'Create account'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading || !homeClubId}
+              className="w-full rounded-lg bg-purple-600 py-3 text-sm font-medium text-white transition-all hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-600"
+            >
+              {loading ? 'Creating account...' : 'Create Account'}
+            </button>
+          </form>
+        )}
       </div>
 
       <p className="mt-6 text-center text-sm text-muted">
         Already have an account?{' '}
-        <Link href="/login" className="font-medium hover:underline" style={{ color: 'var(--futfi8-color-text-accent)' }}>
+        <Link href="/login" className="font-medium hover:underline text-purple-400">
           Sign in
         </Link>
       </p>

@@ -17,6 +17,7 @@ export default function PickTeamPage() {
   const router = useRouter()
   const [clubs, setClubs] = useState<Club[]>([])
   const [selectedClubId, setSelectedClubId] = useState<string | null>(null)
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -135,7 +136,7 @@ export default function PickTeamPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {clubs.map((club) => {
             const isSelected = selectedClubId === club.id
             return (
@@ -152,11 +153,12 @@ export default function PickTeamPage() {
                   }`,
                 }}
               >
-                {club.crest_url ? (
+                {club.crest_url && !brokenImages.has(club.id) ? (
                   <img
                     src={club.crest_url}
                     alt={club.short_name}
                     className="h-10 w-10 object-contain"
+                    onError={() => setBrokenImages((prev) => new Set(prev).add(club.id))}
                   />
                 ) : (
                   <div

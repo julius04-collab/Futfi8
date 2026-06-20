@@ -66,7 +66,6 @@ function ClubCrest({ club, size = 44 }: { club: Club; size?: number }) {
 
   return (
     <div
-<<<<<<< Updated upstream
       className="flex items-center justify-center rounded-sm shrink-0 overflow-hidden"
       style={{
         width: size,
@@ -76,10 +75,6 @@ function ClubCrest({ club, size = 44 }: { club: Club; size?: number }) {
           : 'transparent',
       }}
       aria-label={club.name}
-=======
-      className="flex min-h-full flex-1 flex-col items-center px-4 pt-32 md:justify-center md:pt-0"
-      style={{ background: 'var(--futfi8-color-background-base)' }}
->>>>>>> Stashed changes
     >
       {crestPath && !imgError ? (
         <img

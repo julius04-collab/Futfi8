@@ -53,12 +53,13 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
+     * - crests (local club badge graphics)
      * - favicon.ico (favicon file)
-     * - crests (local asset paths)
-     * - public landing root (the '/' exception string entry)
+     * - Absolute landing root line: ^/$ (matches exactly just the home domain)
      */
-    '/((?!_next/static|_next/image|favicon.ico|crests|^/$).*)',
+    '/((?!api|_next/static|_next/image|crests|favicon.ico|^/$).*)',
   ],
 }

@@ -61,6 +61,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - Root path: end-of-string anchor after leading /
      */
-    '/((?!api|_next/static|_next/image|images|crests|favicon.ico|$).*)',
+    '/((?!api|_next/static|_next/image|images|Images|crests|favicon.ico|$).*)',
   ],
 }

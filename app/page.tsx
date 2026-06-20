@@ -543,17 +543,26 @@ function WaitlistSection() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState<string | null>(null)
   const chosen = useMemo(() => CLUBS.find((c) => c.id === club), [club])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setError('')
+    setEmailError(null)
+
     if (!club) {
       alert('Please pick your home locker room club before locking in!')
       return
     }
-    if (!email) return
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setEmailError('Enter a valid email address')
+      return
+    }
+
     setLoading(true)
-    setError('')
 
     const { error: insertError } = await supabase
       .from('waitlist')
@@ -612,7 +621,7 @@ function WaitlistSection() {
               </button>
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="space-y-6">
+            <form onSubmit={onSubmit} noValidate className="space-y-6">
               <div>
                 <label className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">
                   01 · Your home club
@@ -644,11 +653,25 @@ function WaitlistSection() {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (emailError) setEmailError(null)
+                  }}
                   placeholder="you@matchday.com"
-                  className="mt-3 w-full rounded-sm border border-slate-800/60 bg-black px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-accent-muted focus:outline-none transition"
+                  className={`mt-3 w-full rounded-sm border bg-black px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none transition ${
+                    emailError
+                      ? 'border-red-500/50 bg-red-950/10'
+                      : 'border-slate-800/60 focus:border-accent-muted'
+                  }`}
                 />
               </div>
+
+              {emailError && (
+                <div className="mt-2 text-xs text-red-400 flex items-center gap-1.5 animate-fade-in">
+                  <span>⚠️</span>
+                  <span>{emailError}</span>
+                </div>
+              )}
 
               {error && (
                 <p className="text-xs text-red-400 font-mono">{error}</p>

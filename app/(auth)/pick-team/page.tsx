@@ -65,25 +65,30 @@ export default function PickTeamPage() {
 
   async function handleCompleteOnboarding() {
     if (!selectedClubId) return
-    router.push('/hot-takes')
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user?.id) {
-        console.error('Background sync aborted: No valid user UUID found.')
+        router.push('/login')
         return
       }
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('users')
         .update({
           home_club_id: selectedClubId,
           bio: bio.trim() || null,
         })
         .eq('id', user.id)
+
+      if (updateError) throw updateError
+
+      router.refresh()
+      router.push('/hot-takes')
     } catch (err) {
-      console.error('Background onboarding save sync failed:', err)
+      console.error('Onboarding failed:', err)
+      setError('Failed to save your club selection. Please try again.')
     }
   }
 

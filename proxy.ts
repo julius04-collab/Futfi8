@@ -59,11 +59,8 @@ export default async function proxy(req: NextRequest) {
     }
   )
 
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    if (error || !user) throw error || new Error('No session')
-  } catch {
-    await supabase.auth.signOut().catch(() => {})
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)

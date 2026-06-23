@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { PostFeed } from '@/components/locker-room/PostFeed'
-import { ComposeBox } from '@/components/locker-room/ComposeBox'
 import { RaidHistory } from '@/components/locker-room/RaidHistory'
+import { MAX_POST_LENGTH } from '@/lib/constants'
 import { Members } from '@/components/locker-room/Members'
 import { Fixtures } from '@/components/locker-room/Fixtures'
 import { RaidBanner } from '@/components/raid/RaidBanner'
@@ -19,6 +19,7 @@ type ClubData = {
   short_name: string
   primary_color: string
   secondary_color: string
+  crest_url?: string
 }
 
 type UserProfile = {
@@ -53,6 +54,30 @@ export default function LockerRoomPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<string>('Feed')
   const [feedKey, setFeedKey] = useState(0)
+  const [content, setContent] = useState('')
+  const [posting, setPosting] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const charsLeft = MAX_POST_LENGTH - content.length
+
+  async function handleSubmit() {
+    const trimmed = content.trim()
+    if (!trimmed || posting || charsLeft < 0) return
+    setPosting(true)
+    try {
+      await handlePost(trimmed)
+      setContent('')
+    } finally {
+      setPosting(false)
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
 
   const { raid: activeRaid, loading: raidLoading } = useActiveRaid(clubId, profile?.id ?? null)
 
@@ -71,7 +96,7 @@ export default function LockerRoomPage() {
         Promise.all([
           supabase
             .from('clubs')
-            .select('id, name, short_name, primary_color, secondary_color')
+            .select('id, name, short_name, primary_color, secondary_color, crest_url')
             .eq('id', clubId)
             .single(),
           supabase
@@ -157,16 +182,25 @@ export default function LockerRoomPage() {
         }}
       >
         <div className="flex items-center gap-4">
-          <div
-            className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold shrink-0"
-            style={{
-              background: 'rgba(0,0,0,0.3)',
-              color: '#fff',
-              fontFamily: 'var(--futfi8-typography-font-family-display)',
-            }}
-          >
-            {club.short_name}
-          </div>
+          {club.crest_url ? (
+            <img
+              src={club.crest_url}
+              alt={club.short_name}
+              className="h-14 w-14 rounded-full object-contain shrink-0"
+              style={{ background: 'rgba(0,0,0,0.2)' }}
+            />
+          ) : (
+            <div
+              className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold shrink-0"
+              style={{
+                background: 'rgba(0,0,0,0.3)',
+                color: '#fff',
+                fontFamily: 'var(--futfi8-typography-font-family-display)',
+              }}
+            >
+              {club.short_name}
+            </div>
+          )}
           <div>
             <h1
               className="text-2xl font-bold"
@@ -252,21 +286,49 @@ export default function LockerRoomPage() {
 
       {activeTab === 'Feed' && (
         <>
-          {profile && lockerRoom?.id && isRaidActive && activeRaid.role === 'attacker' && (
+          {isRaidActive && activeRaid.role === 'attacker' ? (
             <RaidComposeBox
-              username={profile.username}
-              avatarUrl={profile.avatar_url}
+              username={profile?.username ?? 'fan'}
+              avatarUrl={profile?.avatar_url ?? null}
               raidWindowId={activeRaid.id}
               defendingLockerRoomId={activeRaid.defending_room_id}
               onRaidPosted={handleRaidPosted}
             />
-          )}
-          {profile && lockerRoom?.id && !(isRaidActive && activeRaid.role === 'attacker') && (
-            <ComposeBox
-              username={profile.username}
-              avatarUrl={profile.avatar_url}
-              onPost={handlePost}
-            />
+          ) : (
+            <div className="border-b border-[#1e2230] bg-[#0c0d12]">
+              <div className="p-4">
+                <div className="rounded-xl border border-[#1e2230] bg-[#12141c] p-4">
+                  <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
+                    Posting as{' '}
+                    <span className="text-white font-semibold">
+                      @{profile?.username ?? 'fan'}
+                    </span>
+                  </p>
+                  <textarea
+                    ref={textareaRef}
+                    placeholder={`Drop a hot take in the ${club.short_name} room...`}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    rows={2}
+                    maxLength={MAX_POST_LENGTH}
+                    className="w-full bg-transparent text-white text-sm placeholder-gray-600 focus:outline-none resize-none min-h-[60px] leading-relaxed"
+                  />
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className={`font-mono text-[10px] ${charsLeft < 0 ? 'text-red-400' : 'text-gray-600'}`}>
+                      {charsLeft}
+                    </span>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!content.trim() || posting || charsLeft < 0}
+                      className="px-6 py-2 bg-[#a855f7] hover:bg-[#9333ea] disabled:bg-gray-800 disabled:text-gray-500 text-white text-xs font-bold uppercase tracking-wider rounded-md transition duration-150"
+                    >
+                      {posting ? 'Posting...' : 'Post'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
           {lockerRoom?.id && profile && (
             <PostFeed

@@ -105,7 +105,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <Link href={lockerRoomHref} prefetch={false} className="text-left">
             <div className="flex flex-col">
               <span className="text-white font-sans font-medium tracking-tight text-lg">
-                FUTFI8
+                FUT<span className="text-[#a855f7]">FI8</span>
               </span>
               <span className="text-[11px] text-white/50 font-sans tracking-wide">
                 The football. The fight.

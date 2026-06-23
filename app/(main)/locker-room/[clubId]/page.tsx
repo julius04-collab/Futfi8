@@ -203,7 +203,7 @@ export default function LockerRoomPage() {
           )}
           <div>
             <h1
-              className="text-2xl font-bold"
+              className="text-2xl font-medium"
               style={{
                 fontFamily: 'var(--futfi8-typography-font-family-display)',
                 color: '#fff',

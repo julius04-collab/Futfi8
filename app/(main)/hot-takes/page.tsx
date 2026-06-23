@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 
@@ -30,6 +30,14 @@ interface Post {
 
 const CLUB_CODES = ['ALL CLUBS', 'ARS', 'AVL', 'BOU', 'BRE', 'BHA', 'CHE', 'COV', 'CRY', 'EVE', 'FUL', 'HUL', 'IPS', 'LEE', 'LIV', 'MCI', 'MUN', 'NEW', 'NFO', 'SUN', 'TOT']
 
+const TRENDING = [
+  { category: 'Trending in United Locker Room', title: '#AmorimCooking', count: '12.5K takes' },
+  { category: 'Trending in London', title: 'Saka & Odegaard', count: '8.4K takes' },
+  { category: 'Trending Worldwide', title: '#HaalandBrace', count: '22.1K takes' },
+  { category: 'Trending in Madrid', title: 'Mbappe Form', count: '15.3K takes' },
+  { category: 'Trending in Munich', title: 'Kane Hat-trick', count: '9.2K takes' },
+]
+
 export default function HotTakesDashboard() {
   const router = useRouter()
   const [profile, setProfile] = useState<AuthorInfo | null>(null)
@@ -41,6 +49,10 @@ export default function HotTakesDashboard() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedClubFilter, setSelectedClubFilter] = useState('ALL CLUBS')
   const [postContent, setPostContent] = useState('')
+  const [showAllTrends, setShowAllTrends] = useState(false)
+  const [showLeftArrow, setShowLeftArrow] = useState(false)
+  const [showRightArrow, setShowRightArrow] = useState(true)
+  const chipsContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -76,9 +88,7 @@ export default function HotTakesDashboard() {
 
         if (!clubsRes.error && clubsRes.data) {
           const map: Record<string, ClubInfo> = {}
-          for (const club of clubsRes.data) {
-            map[club.id] = club
-          }
+          for (const club of clubsRes.data) map[club.id] = club
           setClubMap(map)
         }
 
@@ -104,9 +114,7 @@ export default function HotTakesDashboard() {
         .eq('type', 'hot_take')
         .order('created_at', { ascending: false })
 
-      if (!error && data) {
-        setPosts(data as unknown as Post[])
-      }
+      if (!error && data) setPosts(data as unknown as Post[])
     } catch {
       // fallback to empty
     }
@@ -118,14 +126,12 @@ export default function HotTakesDashboard() {
     return club?.short_name ?? ''
   }
 
-  const handleCreatePost = async (content: string) => {
-    if (!content.trim() || !profile) return
+  const handleCreatePost = async () => {
+    if (!postContent.trim() || !profile) return
     setSubmitting(true)
-
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
-
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: {
@@ -134,21 +140,19 @@ export default function HotTakesDashboard() {
         },
         body: JSON.stringify({
           locker_room_id: homeLockerRoomId,
-          content: content.trim(),
+          content: postContent.trim(),
           type: 'hot_take',
         }),
       })
 
       if (res.ok) {
         const { post } = await res.json()
-        if (post) {
-          setPosts([post as unknown as Post, ...posts])
-        }
+        if (post) setPosts([post as unknown as Post, ...posts])
       } else {
-        const optimisticPost: Post = {
+        setPosts([{
           id: Math.random().toString(),
           created_at: new Date().toISOString(),
-          content: content.trim(),
+          content: postContent.trim(),
           author_id: profile.id,
           author: {
             id: profile.id,
@@ -156,14 +160,27 @@ export default function HotTakesDashboard() {
             avatar_url: null,
             home_club_id: profile.home_club_id,
           },
-        }
-        setPosts([optimisticPost, ...posts])
+        }, ...posts])
       }
       setPostContent('')
     } catch {
       console.error('Failed to submit post')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleChipsScroll = () => {
+    if (chipsContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = chipsContainerRef.current
+      setShowLeftArrow(scrollLeft > 15)
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 15)
+    }
+  }
+
+  const scrollChips = (direction: 'left' | 'right') => {
+    if (chipsContainerRef.current) {
+      chipsContainerRef.current.scrollBy({ left: direction === 'left' ? -200 : 200, behavior: 'smooth' })
     }
   }
 
@@ -175,11 +192,14 @@ export default function HotTakesDashboard() {
     return textMatch && clubMatch
   })
 
+  const visibleTrends = showAllTrends ? TRENDING : TRENDING.slice(0, 3)
+
   return (
-    <div className="w-full max-w-[1250px] flex">
+    <div className="flex-1 flex max-w-full lg:max-w-[975px] justify-center mx-auto">
+
       {/* MAIN FEED */}
-      <main className="flex-1 min-h-screen border-r border-[#1e2230] flex flex-col max-w-[590px]">
-        <header className="sticky top-0 bg-[#0b0c10]/80 backdrop-blur-md border-b border-[#1e2230] px-4 py-3.5 z-10">
+      <main className="flex-1 min-h-screen border-r border-[#1e2230] flex flex-col w-full max-w-full md:max-w-[600px] bg-[#0b0c10]">
+        <header className="sticky top-0 bg-[#0b0c10]/85 backdrop-blur-md border-b border-[#1e2230] px-4 py-3.5 z-10">
           <h2 className="text-xl font-bold text-white tracking-tight">The Hot Take Board</h2>
           <p className="text-[11px] text-gray-500 mt-0.5">Every club. Every fan. One main feed.</p>
         </header>
@@ -189,52 +209,69 @@ export default function HotTakesDashboard() {
             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shadow-sm flex-shrink-0">
               {profile.username.substring(0, 2)}
             </div>
-
             <div className="flex-1 space-y-2">
               <textarea
                 value={postContent}
                 onChange={(e) => setPostContent(e.target.value)}
                 placeholder="What's happening in football today?"
                 maxLength={280}
-                className="w-full bg-transparent text-white text-[15px] placeholder-zinc-600 focus:outline-none resize-none pt-1 min-h-[44px] max-h-[160px] scrollbar-thin"
+                className="w-full bg-transparent text-white text-[15px] placeholder-zinc-600 focus:outline-none resize-none pt-1 min-h-[44px] max-h-[160px] scrollbar-none"
               />
-
               <div className="flex justify-between items-center pt-2 border-t border-zinc-900/50">
                 <div className="flex items-center gap-4 text-[#a855f7]">
                   <button className="hover:bg-purple-950/20 p-1.5 rounded-full transition">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                   </button>
-                  <button className="hover:bg-purple-950/20 p-1.5 rounded-full transition">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  </button>
                 </div>
-
                 <button
-                  onClick={() => handleCreatePost(postContent)}
+                  onClick={handleCreatePost}
                   disabled={submitting || !postContent.trim()}
                   className="px-5 py-1.5 bg-[#a855f7] hover:bg-[#9333ea] disabled:bg-purple-950/30 disabled:text-purple-400/40 text-white font-bold text-xs uppercase tracking-wider rounded-full transition duration-150 flex-shrink-0"
                 >
-                  {submitting ? 'Posting...' : 'Post'}
+                  {submitting ? 'Posting...' : 'Drop Take'}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        <div className="border-b border-[#1e2230] bg-[#0b0c10] px-4 py-3 flex gap-2 overflow-x-auto scrollbar-none select-none">
-          {CLUB_CODES.map((club) => (
+        {/* Club Capsule Filter Row with HOVER CHEVRONS */}
+        <div className="relative border-b border-[#1e2230] bg-[#0b0c10] group">
+          {showLeftArrow && (
             <button
-              key={club}
-              onClick={() => setSelectedClubFilter(club)}
-              className={`px-3 py-1 text-xs font-bold uppercase rounded-full transition duration-150 flex-shrink-0 border ${
-                selectedClubFilter === club
-                  ? 'bg-[#a855f7] text-white border-transparent'
-                  : 'bg-zinc-900/60 text-gray-400 border-zinc-800 hover:text-white hover:border-zinc-700'
-              }`}
+              onClick={() => scrollChips('left')}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 bg-[#12141c]/80 hover:bg-[#a855f7] border border-[#1e2230] rounded-full flex items-center justify-center text-white transition duration-150 z-20 pointer-events-auto hidden group-hover:flex"
             >
-              {club}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
             </button>
-          ))}
+          )}
+          {showRightArrow && (
+            <button
+              onClick={() => scrollChips('right')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 bg-[#12141c]/80 hover:bg-[#a855f7] border border-[#1e2230] rounded-full flex items-center justify-center text-white transition duration-150 z-20 pointer-events-auto hidden group-hover:flex"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+            </button>
+          )}
+          <div
+            ref={chipsContainerRef}
+            onScroll={handleChipsScroll}
+            className="px-4 py-3 flex gap-2 overflow-x-auto scrollbar-none select-none transition-all duration-150 scroll-smooth"
+          >
+            {CLUB_CODES.map((club) => (
+              <button
+                key={club}
+                onClick={() => setSelectedClubFilter(club)}
+                className={`px-3 py-1 text-xs font-bold uppercase rounded-full transition duration-150 flex-shrink-0 border ${
+                  selectedClubFilter === club
+                    ? 'bg-[#a855f7] text-white border-transparent'
+                    : 'bg-zinc-900/60 text-gray-400 border-zinc-800 hover:text-white hover:border-zinc-700'
+                }`}
+              >
+                {club}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
@@ -276,7 +313,6 @@ export default function HotTakesDashboard() {
                       <p className="text-[14px] text-gray-200 mt-1.5 leading-normal whitespace-pre-wrap select-text">
                         {post.content}
                       </p>
-
                       <div className="flex items-center gap-8 text-gray-600 mt-4">
                         <button className="flex items-center gap-1.5 text-xs hover:text-[#a855f7] transition group">
                           <svg className="w-4 h-4 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -296,8 +332,8 @@ export default function HotTakesDashboard() {
         )}
       </main>
 
-      {/* COLUMN 3: RIGHT SIDEBAR */}
-      <aside className="w-[350px] h-screen sticky top-0 hidden lg:flex flex-col gap-4 px-4 py-6 overflow-y-auto scrollbar-none z-10">
+      {/* RIGHT SIDEBAR */}
+      <aside className="w-[350px] h-screen sticky top-0 hidden lg:flex flex-col gap-4 px-4 py-6 overflow-y-auto scrollbar-none z-10 flex-shrink-0">
         <div className="relative sticky top-0 bg-[#0b0c10] pb-2 z-10">
           <input
             type="text"
@@ -317,83 +353,50 @@ export default function HotTakesDashboard() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
             </span>
           </div>
-
           <div className="space-y-3 divide-y divide-zinc-900/40">
             <div className="pt-2 flex items-center justify-between text-xs">
               <div className="flex flex-col gap-1 font-semibold text-gray-300">
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 bg-red-600 rounded flex items-center justify-center text-[10px] text-white font-bold">M</span>
-                  <span>Manchester Utd</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 bg-purple-600 rounded flex items-center justify-center text-[10px] text-white font-bold">A</span>
-                  <span>Arsenal</span>
-                </div>
+                <div className="flex items-center gap-2"><span className="w-4 h-4 bg-red-600 rounded flex items-center justify-center text-[10px] text-white font-bold">M</span><span>Manchester Utd</span></div>
+                <div className="flex items-center gap-2"><span className="w-4 h-4 bg-purple-600 rounded flex items-center justify-center text-[10px] text-white font-bold">A</span><span>Arsenal</span></div>
               </div>
-              <div className="flex flex-col items-end gap-1 font-mono text-white">
-                <span>1</span>
-                <span>1</span>
-                <span className="text-[10px] text-red-500 font-bold tracking-wider animate-pulse">66'</span>
-              </div>
+              <div className="flex flex-col items-end gap-1 font-mono text-white"><span>1</span><span>1</span><span className="text-[10px] text-red-500 font-bold tracking-wider animate-pulse">66'</span></div>
             </div>
-
             <div className="pt-3 flex items-center justify-between text-xs">
               <div className="flex flex-col gap-1 font-semibold text-gray-300">
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 bg-blue-600 rounded flex items-center justify-center text-[10px] text-white font-bold">C</span>
-                  <span>Chelsea</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 bg-sky-400 rounded flex items-center justify-center text-[10px] text-white font-bold">M</span>
-                  <span>Manchester City</span>
-                </div>
+                <div className="flex items-center gap-2"><span className="w-4 h-4 bg-blue-600 rounded flex items-center justify-center text-[10px] text-white font-bold">C</span><span>Chelsea</span></div>
+                <div className="flex items-center gap-2"><span className="w-4 h-4 bg-sky-400 rounded flex items-center justify-center text-[10px] text-white font-bold">M</span><span>Manchester City</span></div>
               </div>
-              <div className="flex flex-col items-end gap-1 font-mono text-white">
-                <span>3</span>
-                <span>2</span>
-                <span className="text-[10px] text-gray-500 font-bold uppercase">FT</span>
-              </div>
+              <div className="flex flex-col items-end gap-1 font-mono text-white"><span>3</span><span>2</span><span className="text-[10px] text-gray-500 font-bold uppercase">FT</span></div>
             </div>
           </div>
         </div>
 
         <div className="bg-[#12141c] border border-[#1e2230] rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-4 pb-2">
-            <h3 className="text-md font-bold tracking-tight text-white">Football Trending</h3>
-          </div>
-
+          <div className="p-4 pb-2"><h3 className="text-md font-bold tracking-tight text-white">Football Trending</h3></div>
           <div className="divide-y divide-[#1e2230]/50">
-            <div className="p-4 hover:bg-zinc-950/20 cursor-pointer transition" onClick={() => setSearchQuery('#AmorimCooking')}>
-              <span className="text-[11px] text-gray-500 font-medium">Trending in United Locker Room</span>
-              <p className="text-sm font-bold text-white mt-0.5">#AmorimCooking</p>
-              <span className="text-[11px] text-[#a855f7] font-semibold mt-1 block">12.5K takes dropped</span>
-            </div>
-
-            <div className="p-4 hover:bg-zinc-950/20 cursor-pointer transition" onClick={() => setSearchQuery('Saka')}>
-              <span className="text-[11px] text-gray-500 font-medium">Trending in London</span>
-              <p className="text-sm font-bold text-white mt-0.5">Saka &amp; Odegaard</p>
-              <span className="text-[11px] text-[#a855f7] font-semibold mt-1 block">8.4K takes dropped</span>
-            </div>
-
-            <div className="p-4 hover:bg-zinc-950/20 cursor-pointer transition" onClick={() => setSearchQuery('#HaalandBrace')}>
-              <span className="text-[11px] text-gray-500 font-medium">Trending Worldwide</span>
-              <p className="text-sm font-bold text-white mt-0.5">#HaalandBrace</p>
-              <span className="text-[11px] text-[#a855f7] font-semibold mt-1 block">22.1K takes dropped</span>
-            </div>
+            {visibleTrends.map((trend, i) => (
+              <div key={i} className="p-4 hover:bg-zinc-950/20 cursor-pointer transition" onClick={() => setSearchQuery(trend.title)}>
+                <span className="text-[11px] text-gray-500 font-medium">{trend.category}</span>
+                <p className="text-sm font-bold text-white mt-0.5">{trend.title}</p>
+                <span className="text-[11px] text-[#a855f7] font-semibold mt-1 block">{trend.count} dropped</span>
+              </div>
+            ))}
           </div>
+          <button
+            onClick={() => setShowAllTrends(!showAllTrends)}
+            className="w-full text-left p-4 text-xs font-bold text-[#a855f7] hover:bg-zinc-950/20 transition border-t border-[#1e2230]/50 uppercase tracking-wider"
+          >
+            {showAllTrends ? 'Show less' : 'See all'}
+          </button>
         </div>
 
         <div className="bg-[#12141c] border border-[#1e2230] rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-4 pb-2 border-b border-[#1e2230]/50">
-            <h3 className="text-md font-bold tracking-tight text-white">Today's Football News</h3>
-          </div>
-
+          <div className="p-4 pb-2 border-b border-[#1e2230]/50"><h3 className="text-md font-bold tracking-tight text-white">Today's Football News</h3></div>
           <div className="p-4 space-y-3.5">
             <div className="space-y-1 hover:opacity-85 cursor-pointer transition">
               <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400">Transfer Market</span>
               <p className="text-xs font-bold leading-snug text-gray-100">Arsenal eyes premium striker target in coming window; €80M bid prepared.</p>
             </div>
-
             <div className="space-y-1 hover:opacity-85 cursor-pointer transition">
               <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400">Locker Room Raid</span>
               <p className="text-xs font-bold leading-snug text-gray-100">United fans completely raid Chelsea locker room following dynamic 3-1 win!</p>
@@ -401,6 +404,7 @@ export default function HotTakesDashboard() {
           </div>
         </div>
       </aside>
+
     </div>
   )
 }

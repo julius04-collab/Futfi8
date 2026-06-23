@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 
@@ -41,20 +41,6 @@ export default function HotTakesDashboard() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedClubFilter, setSelectedClubFilter] = useState('ALL CLUBS')
   const [postContent, setPostContent] = useState('')
-  const [modalPostContent, setModalPostContent] = useState('')
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
-  const [showPostModal, setShowPostModal] = useState(false)
-  const profileMenuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setShowProfileMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -132,7 +118,7 @@ export default function HotTakesDashboard() {
     return club?.short_name ?? ''
   }
 
-  const handleCreatePost = async (content: string, isFromModal = false) => {
+  const handleCreatePost = async (content: string) => {
     if (!content.trim() || !profile) return
     setSubmitting(true)
 
@@ -173,23 +159,12 @@ export default function HotTakesDashboard() {
         }
         setPosts([optimisticPost, ...posts])
       }
-
-      if (isFromModal) {
-        setModalPostContent('')
-        setShowPostModal(false)
-      } else {
-        setPostContent('')
-      }
+      setPostContent('')
     } catch {
       console.error('Failed to submit post')
     } finally {
       setSubmitting(false)
     }
-  }
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
   }
 
   const filteredPosts = posts.filter(post => {
@@ -202,88 +177,7 @@ export default function HotTakesDashboard() {
 
   return (
     <div className="w-full max-w-[1250px] flex">
-      {/* COLUMN 1: LEFT SIDEBAR */}
-      <aside className="w-[275px] h-screen sticky top-0 flex flex-col justify-between border-r border-[#1e2230] px-4 py-6 z-10">
-        <div className="space-y-6">
-          <div className="px-3 flex items-center gap-2 cursor-pointer" onClick={() => router.push('/hot-takes')}>
-            <h1 className="text-2xl font-medium tracking-tight text-white select-none">
-              FUT<span className="text-[#a855f7]">FI8</span>
-            </h1>
-          </div>
-
-          <nav className="space-y-1">
-            <button
-              onClick={() => router.push('/locker-room')}
-              className="w-full flex items-center gap-4 px-3 py-3 rounded-full hover:bg-zinc-900/50 transition duration-150 text-gray-300 hover:text-white font-medium text-lg"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-              <span>Locker Room</span>
-            </button>
-
-            <button
-              onClick={() => router.push('/hot-takes')}
-              className="w-full flex items-center gap-4 px-3 py-3 rounded-full bg-zinc-900/50 text-white font-semibold text-lg transition duration-150"
-            >
-              <svg className="w-6 h-6 text-[#a855f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>
-              <span>Hot Takes</span>
-            </button>
-
-            <button className="w-full flex items-center gap-4 px-3 py-3 rounded-full hover:bg-zinc-900/50 transition duration-150 text-gray-300 hover:text-white font-medium text-lg">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-              <span>Alerts</span>
-            </button>
-
-            <button className="w-full flex items-center gap-4 px-3 py-3 rounded-full hover:bg-zinc-900/50 transition duration-150 text-gray-300 hover:text-white font-medium text-lg">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-              <span>Profile</span>
-            </button>
-          </nav>
-
-          <button
-            onClick={() => setShowPostModal(true)}
-            className="w-full py-3.5 bg-[#a855f7] hover:bg-[#9333ea] text-white font-bold tracking-wide uppercase rounded-full transition duration-150 shadow-md shadow-purple-500/10 active:scale-[0.98]"
-          >
-            Post
-          </button>
-        </div>
-
-        <div className="relative" ref={profileMenuRef}>
-          {showProfileMenu && (
-            <div className="absolute bottom-16 left-0 w-full bg-[#12141c] border border-[#1e2230] rounded-2xl p-2.5 shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-100 z-20">
-              <button className="w-full text-left px-3.5 py-2.5 text-sm hover:bg-zinc-800/40 rounded-lg transition text-gray-300 hover:text-white font-medium flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span>Add existing account</span>
-              </button>
-              <div className="h-[1px] bg-[#1e2230] my-1.5" />
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-3.5 py-2.5 text-sm hover:bg-red-950/20 text-red-400 hover:text-red-300 rounded-lg transition font-medium flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                <span>Log out @{profile?.username || 'user'}</span>
-              </button>
-            </div>
-          )}
-
-          <div
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-full flex items-center justify-between p-3 rounded-full hover:bg-zinc-900/50 cursor-pointer transition duration-150 select-none border border-transparent hover:border-zinc-800"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center font-bold text-white uppercase text-sm shadow-md">
-                {profile?.username ? profile.username.substring(0, 2) : 'FI'}
-              </div>
-              <div className="text-left leading-tight hidden xl:block">
-                <p className="text-sm font-semibold text-white truncate max-w-[110px]">{profile?.username || 'fan'}</p>
-                <p className="text-xs text-gray-500 truncate max-w-[110px]">@{profile?.username || 'fan'}</p>
-              </div>
-            </div>
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
-          </div>
-        </div>
-      </aside>
-
-      {/* COLUMN 2: MAIN FEED */}
+      {/* MAIN FEED */}
       <main className="flex-1 min-h-screen border-r border-[#1e2230] flex flex-col max-w-[590px]">
         <header className="sticky top-0 bg-[#0b0c10]/80 backdrop-blur-md border-b border-[#1e2230] px-4 py-3.5 z-10">
           <h2 className="text-xl font-bold text-white tracking-tight">The Hot Take Board</h2>
@@ -316,7 +210,7 @@ export default function HotTakesDashboard() {
                 </div>
 
                 <button
-                  onClick={() => handleCreatePost(postContent, false)}
+                  onClick={() => handleCreatePost(postContent)}
                   disabled={submitting || !postContent.trim()}
                   className="px-5 py-1.5 bg-[#a855f7] hover:bg-[#9333ea] disabled:bg-purple-950/30 disabled:text-purple-400/40 text-white font-bold text-xs uppercase tracking-wider rounded-full transition duration-150 flex-shrink-0"
                 >
@@ -507,61 +401,6 @@ export default function HotTakesDashboard() {
           </div>
         </div>
       </aside>
-
-      {/* POST MODAL */}
-      {showPostModal && (
-        <div className="fixed inset-0 bg-[#050508]/80 backdrop-blur-md flex items-start justify-center pt-[12vh] px-4 z-50 animate-in fade-in duration-150">
-          <div className="w-full max-w-[520px] bg-[#12141c] border border-[#1e2230] rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2230]">
-              <button
-                onClick={() => {
-                  setModalPostContent('')
-                  setShowPostModal(false)
-                }}
-                className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-zinc-800 transition"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">Draft Hot Take</h4>
-              <div className="w-5 h-5" />
-            </div>
-
-            <div className="p-4 flex gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shadow-sm flex-shrink-0">
-                {profile?.username ? profile.username.substring(0, 2) : 'FI'}
-              </div>
-              <div className="flex-1 space-y-4">
-                <textarea
-                  value={modalPostContent}
-                  onChange={(e) => setModalPostContent(e.target.value)}
-                  placeholder="What is your latest hot football take?"
-                  maxLength={280}
-                  className="w-full bg-transparent text-white text-[16px] placeholder-zinc-600 focus:outline-none resize-none pt-1 min-h-[120px] max-h-[280px]"
-                  autoFocus
-                />
-
-                <div className="flex justify-between items-center pt-3 border-t border-[#1e2230]">
-                  <div className="flex items-center gap-4 text-[#a855f7]">
-                    <button className="hover:bg-purple-950/20 p-1.5 rounded-full transition">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    </button>
-                    <button className="hover:bg-purple-950/20 p-1.5 rounded-full transition">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => handleCreatePost(modalPostContent, true)}
-                    disabled={submitting || !modalPostContent.trim()}
-                    className="px-6 py-2 bg-[#a855f7] hover:bg-[#9333ea] disabled:bg-purple-950/30 disabled:text-purple-400/40 text-white font-bold text-xs uppercase tracking-wider rounded-full transition duration-150 flex-shrink-0"
-                  >
-                    {submitting ? 'Posting...' : 'Post'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

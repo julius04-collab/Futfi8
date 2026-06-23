@@ -84,11 +84,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     )
   }
 
+  const lockerRoomHref = homeClubId ? `/locker-room/${homeClubId}` : '/hot-takes'
+
   function navigate(item: (typeof NAV_ITEMS)[number]) {
     router.push(item.href)
   }
 
   function isActive(item: (typeof NAV_ITEMS)[number]) {
+    if (item.href === '/locker-room') {
+      return pathname.startsWith('/locker-room')
+    }
     return pathname.startsWith(item.href)
   }
 
@@ -97,7 +102,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       {/* Desktop Sidebar — md+ */}
       <aside className="hidden md:flex fixed top-0 left-0 h-screen w-64 bg-background border-r border-border/40 flex-col justify-between p-6 z-40">
         <div>
-          <Link href="/locker-room" prefetch={false} className="text-left">
+          <Link href={lockerRoomHref} prefetch={false} className="text-left">
             <div className="flex flex-col">
               <span className="text-white font-sans font-medium tracking-tight text-lg">
                 FUTFI8
@@ -130,8 +135,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   <Link
                     key={item.href}
                     href="/locker-room"
-                    prefetch={false}
-                    className={sharedClasses}
+                    className={`${sharedClasses} text-left`}
                     style={sharedStyle}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
@@ -200,7 +204,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <Link
                 key={item.href}
                 href="/locker-room"
-                prefetch={false}
                 className="flex flex-col items-center gap-0.5 py-1 px-3"
               >
                 {content}

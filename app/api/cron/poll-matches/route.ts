@@ -123,6 +123,16 @@ export async function GET(req: NextRequest) {
               raidWindowsCreated++
               console.log(`[CRON poll-matches] Raid window created: ${winnerClubId} → ${loserClubId}`)
 
+              // Sync denormalized raid status on locker_rooms
+              await supabaseAdmin
+                .from('locker_rooms')
+                .update({
+                  is_under_raid: true,
+                  raided_by: winnerClubId,
+                  raid_expires_at: closesAt.toISOString(),
+                })
+                .eq('club_id', loserClubId)
+
               // Notify defending club's locker room members
               const { data: defendingRoom } = await supabaseAdmin
                 .from('locker_rooms')

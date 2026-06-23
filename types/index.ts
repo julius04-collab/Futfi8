@@ -22,6 +22,9 @@ export type LockerRoom = {
   id: string
   club_id: string
   member_count: number
+  is_under_raid: boolean
+  raided_by: string | null
+  raid_expires_at: string | null
   created_at: string
 }
 

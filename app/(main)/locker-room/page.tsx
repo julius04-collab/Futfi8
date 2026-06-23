@@ -35,7 +35,8 @@ export default function LockerRoomRedirectPage() {
   }, [router])
 
   return (
-    <div className="flex min-h-screen flex-1 items-center justify-center">
+
+    <div className="flex flex-1 items-center justify-center py-16">
       <LoadingBar />
     </div>
   )

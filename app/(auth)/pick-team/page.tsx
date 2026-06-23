@@ -18,8 +18,8 @@ export default function PickTeamPage() {
   const [clubs, setClubs] = useState<Club[]>([])
   const [selectedClubId, setSelectedClubId] = useState<string | null>(null)
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set())
+  const [bio, setBio] = useState('')
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -59,33 +59,32 @@ export default function PickTeamPage() {
     init()
   }, [router])
 
-  async function handleContinue() {
+  useEffect(() => {
+    router.prefetch('/hot-takes')
+  }, [router])
+
+  async function handleCompleteOnboarding() {
     if (!selectedClubId) return
-    setSaving(true)
-    setError('')
+    router.push('/hot-takes')
 
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = sessionData?.session?.access_token
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
 
-    const res = await fetch('/api/users/me', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ home_club_id: selectedClubId }),
-    })
+      if (!user?.id) {
+        console.error('Background sync aborted: No valid user UUID found.')
+        return
+      }
 
-    const json = await res.json()
-
-    if (!res.ok) {
-      setError(json.error || 'Failed to save club')
-      setSaving(false)
-      return
+      await supabase
+        .from('users')
+        .update({
+          home_club_id: selectedClubId,
+          bio: bio.trim() || null,
+        })
+        .eq('id', user.id)
+    } catch (err) {
+      console.error('Background onboarding save sync failed:', err)
     }
-
-    router.push('/')
-    router.refresh()
   }
 
   if (loading) {
@@ -101,11 +100,8 @@ export default function PickTeamPage() {
   return (
     <div>
       <div className="mb-8 text-center">
-        <h1
-          className="text-4xl font-extrabold tracking-tight"
-          style={{ fontFamily: 'var(--futfi8-typography-font-family-display)' }}
-        >
-          FUTFI8
+        <h1 className="text-3xl font-medium tracking-tight text-white">
+          FUT<span className="text-[#a855f7]">FI8</span>
         </h1>
         <p
           className="mt-1 text-sm"
@@ -198,17 +194,25 @@ export default function PickTeamPage() {
           })}
         </div>
 
-        <button
-          onClick={handleContinue}
-          disabled={!selectedClubId || saving}
-          className="mt-6 w-full rounded-lg px-4 py-3 text-sm font-semibold transition-opacity disabled:opacity-50"
-          style={{
-            background: 'var(--futfi8-color-ui-cta-primary)',
-            color: 'var(--futfi8-color-ui-cta-text)',
-          }}
-        >
-          {saving ? 'Saving...' : 'Continue'}
-        </button>
+        <div className="mt-8 w-full max-w-md mx-auto space-y-4">
+          <div className="text-left">
+            <span className="text-xs font-mono tracking-widest text-gray-500 uppercase">03 &bull; BIO (OPTIONAL)</span>
+          </div>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="One line. Make it count."
+            maxLength={160}
+            className="w-full min-h-[50px] p-4 bg-[#12141c] border border-[#1e2230] text-sm text-white rounded-lg focus:outline-none focus:border-[#a855f7] transition resize-none"
+          />
+          <button
+            onClick={handleCompleteOnboarding}
+            disabled={!selectedClubId}
+            className="w-full py-4 bg-[#a855f7] hover:bg-[#9333ea] disabled:bg-gray-800 disabled:text-gray-500 text-white font-semibold tracking-wider uppercase rounded-md transition duration-150 ease-in-out text-sm shadow-lg shadow-purple-500/10"
+          >
+            ENTER THE ROOM &rarr;
+          </button>
+        </div>
       </div>
     </div>
   )

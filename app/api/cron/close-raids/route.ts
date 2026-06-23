@@ -51,7 +51,16 @@ export async function GET(req: NextRequest) {
       console.error('[CRON close-raids] Close error:', closeError)
     }
 
-    // 4. Archive raid posts from these windows
+    // 4. Reset locker_rooms denormalized raid fields for defending clubs
+    const defendingClubIds = expiredWindows.map((w) => w.defending_club_id)
+    if (defendingClubIds.length) {
+      await supabaseAdmin
+        .from('locker_rooms')
+        .update({ is_under_raid: false, raided_by: null, raid_expires_at: null })
+        .in('club_id', defendingClubIds)
+    }
+
+    // 5. Archive raid posts from these windows
     const { error: archiveError } = await supabaseAdmin
       .from('posts')
       .update({ archived: true })
@@ -61,7 +70,7 @@ export async function GET(req: NextRequest) {
       console.error('[CRON close-raids] Archive error:', archiveError)
     }
 
-    // 5. Recalculate Fan Cred for raid participants
+    // 6. Recalculate Fan Cred for raid participants
     for (const window of expiredWindows) {
       // Get all raid posts for this window
       const { data: raidPosts } = await supabaseAdmin
@@ -104,7 +113,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 6. Close match threads that have expired
+    // 7. Close match threads that have expired
     const { error: threadCloseError } = await supabaseAdmin
       .from('match_threads')
       .update({ status: 'closed' })

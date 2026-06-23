@@ -1,0 +1,161 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Futfi8 design system — tribal, gritty, stadium energy.
+ * Deep midnight base + crimson "fight" accent + chalk-white text.
+ * Display: Anton (condensed, athletic). Body: Inter. Mono accents: JetBrains Mono.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-raid: var(--raid);
+  --color-raid-foreground: var(--raid-foreground);
+  --color-chalk: var(--chalk);
+  --color-pitch: var(--pitch);
+
+  --font-display: "Anton", "Bebas Neue", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+:root {
+  --radius: 0.25rem;
+
+  /* Midnight stadium */
+  --background: oklch(0.16 0.02 260);
+  --foreground: oklch(0.96 0.01 90);
+
+  --card: oklch(0.21 0.025 260);
+  --card-foreground: oklch(0.96 0.01 90);
+
+  --popover: oklch(0.18 0.02 260);
+  --popover-foreground: oklch(0.96 0.01 90);
+
+  /* Crimson — the fight */
+  --primary: oklch(0.62 0.23 25);
+  --primary-foreground: oklch(0.98 0.01 90);
+
+  --secondary: oklch(0.26 0.03 260);
+  --secondary-foreground: oklch(0.96 0.01 90);
+
+  --muted: oklch(0.24 0.025 260);
+  --muted-foreground: oklch(0.68 0.02 260);
+
+  --accent: oklch(0.85 0.18 95); /* chalk-yellow floodlight */
+  --accent-foreground: oklch(0.16 0.02 260);
+
+  --destructive: oklch(0.55 0.24 25);
+  --destructive-foreground: oklch(0.98 0.01 90);
+
+  --border: oklch(0.3 0.02 260);
+  --input: oklch(0.22 0.02 260);
+  --ring: oklch(0.62 0.23 25);
+
+  /* Bespoke */
+  --raid: oklch(0.62 0.23 25);
+  --raid-foreground: oklch(0.98 0.01 90);
+  --chalk: oklch(0.96 0.01 90);
+  --pitch: oklch(0.45 0.12 145);
+}
+
+.dark {
+  --background: oklch(0.16 0.02 260);
+  --foreground: oklch(0.96 0.01 90);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    background-color: var(--color-background);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+}
+
+@layer utilities {
+  .text-display {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 0.9;
+  }
+  .text-mono {
+    font-family: var(--font-mono);
+  }
+  .bg-grain {
+    background-image:
+      radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+  .stadium-vignette {
+    background:
+      radial-gradient(ellipse at center top, oklch(0.62 0.23 25 / 0.18), transparent 60%),
+      radial-gradient(ellipse at center, transparent 30%, oklch(0.1 0.02 260 / 0.85) 100%);
+  }
+  .scoreboard-grid {
+    background-image:
+      linear-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .raid-stripe {
+    background-image: repeating-linear-gradient(
+      135deg,
+      oklch(0.62 0.23 25 / 0.9) 0 14px,
+      oklch(0.16 0.02 260) 14px 28px
+    );
+  }
+  .marquee {
+    animation: marquee 40s linear infinite;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .pulse-raid {
+    animation: pulse-raid 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse-raid {
+    0%, 100% { box-shadow: 0 0 0 0 oklch(0.62 0.23 25 / 0.7); }
+    50% { box-shadow: 0 0 0 14px oklch(0.62 0.23 25 / 0); }
+  }
+}

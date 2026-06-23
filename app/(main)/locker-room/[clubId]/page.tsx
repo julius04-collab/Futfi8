@@ -28,6 +28,19 @@ type UserProfile = {
   home_club_id: string | null
 }
 
+type LockerRoomData = {
+  id: string
+  is_under_raid: boolean
+  raided_by: string | null
+  raid_expires_at: string | null
+  raiding_club: {
+    name: string
+    short_name: string
+    primary_color: string
+    secondary_color: string
+  } | null
+}
+
 const TABS = ['Feed', 'Raid History', 'Members', 'Fixtures'] as const
 
 export default function LockerRoomPage() {
@@ -36,7 +49,7 @@ export default function LockerRoomPage() {
   const clubId = params.clubId as string
   const [club, setClub] = useState<ClubData | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [lockerRoomId, setLockerRoomId] = useState<string | null>(null)
+  const [lockerRoom, setLockerRoom] = useState<LockerRoomData | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<string>('Feed')
   const [feedKey, setFeedKey] = useState(0)
@@ -44,9 +57,12 @@ export default function LockerRoomPage() {
   const { raid: activeRaid, loading: raidLoading } = useActiveRaid(clubId, profile?.id ?? null)
 
   useEffect(() => {
+    let cancelled = false
+
     supabase.auth
       .getUser()
       .then(({ data: { user } }) => {
+        if (cancelled) return
         if (!user) {
           router.push('/login')
           return
@@ -65,33 +81,49 @@ export default function LockerRoomPage() {
             .single(),
           supabase
             .from('locker_rooms')
-            .select('id')
+            .select(`
+              id,
+              is_under_raid,
+              raided_by,
+              raid_expires_at,
+              raiding_club:clubs!raided_by(name, short_name, primary_color, secondary_color)
+            `)
             .eq('club_id', clubId)
             .single(),
         ])
           .then(([clubRes, profileRes, roomRes]) => {
+            if (cancelled) return
             if (clubRes.error || !clubRes.data) {
+              console.error('Club fetch error:', clubRes.error)
               router.push('/hot-takes')
               return
             }
             setClub(clubRes.data)
             setProfile(profileRes.data)
-            if (roomRes.data) setLockerRoomId(roomRes.data.id)
+            if (roomRes.data) setLockerRoom(roomRes.data as unknown as LockerRoomData)
           })
-          .finally(() => setLoading(false))
+          .catch((queryErr) => {
+            console.error('Locker room data fetch error:', queryErr)
+          })
+          .finally(() => {
+            if (!cancelled) setLoading(false)
+          })
       })
-      .catch(() => {
-        router.push('/login')
+      .catch((authErr) => {
+        console.error('Auth getUser error:', authErr)
+        if (!cancelled) router.push('/login')
       })
+
+    return () => { cancelled = true }
   }, [clubId, router])
 
   const handlePost = useCallback(async (content: string) => {
-    if (!lockerRoomId) return
+    if (!lockerRoom?.id) return
     const res = await fetch('/api/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        locker_room_id: lockerRoomId,
+        locker_room_id: lockerRoom.id,
         content,
         type: 'standard',
       }),
@@ -100,7 +132,7 @@ export default function LockerRoomPage() {
       const err = await res.json()
       throw new Error(err.error)
     }
-  }, [lockerRoomId])
+  }, [lockerRoom?.id])
 
   const handleRaidPosted = useCallback(() => {
     setFeedKey((k) => k + 1)
@@ -155,6 +187,30 @@ export default function LockerRoomPage() {
         </div>
       </div>
 
+      {/* Room Under Raid alert — reads directly from locker_rooms denormalized state */}
+      {lockerRoom?.is_under_raid && (
+        <div className="animate-pulse bg-red-600/20 border-y border-red-500/50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="text-red-400 text-lg">⚠️</span>
+            <p className="text-red-400 font-bold text-sm uppercase tracking-wider">
+              ROOM UNDER RAID BY{' '}
+              <span className="text-white">
+                @{lockerRoom.raiding_club?.short_name ?? 'Unknown'}
+              </span>
+            </p>
+          </div>
+          {lockerRoom.raid_expires_at && (
+            <p className="text-red-300/70 text-xs mt-1 ml-7 font-mono">
+              Raid window expires at{' '}
+              {new Date(lockerRoom.raid_expires_at).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+          )}
+        </div>
+      )}
+
       {isRaidActive && (
         <RaidBanner
           raidingClub={activeRaid.raiding_club}
@@ -196,7 +252,7 @@ export default function LockerRoomPage() {
 
       {activeTab === 'Feed' && (
         <>
-          {profile && lockerRoomId && isRaidActive && activeRaid.role === 'attacker' && (
+          {profile && lockerRoom?.id && isRaidActive && activeRaid.role === 'attacker' && (
             <RaidComposeBox
               username={profile.username}
               avatarUrl={profile.avatar_url}
@@ -205,29 +261,29 @@ export default function LockerRoomPage() {
               onRaidPosted={handleRaidPosted}
             />
           )}
-          {profile && lockerRoomId && !(isRaidActive && activeRaid.role === 'attacker') && (
+          {profile && lockerRoom?.id && !(isRaidActive && activeRaid.role === 'attacker') && (
             <ComposeBox
               username={profile.username}
               avatarUrl={profile.avatar_url}
               onPost={handlePost}
             />
           )}
-          {lockerRoomId && profile && (
+          {lockerRoom?.id && profile && (
             <PostFeed
               key={feedKey}
-              lockerRoomId={lockerRoomId}
+              lockerRoomId={lockerRoom.id}
               currentUserId={profile.id}
             />
           )}
         </>
       )}
 
-      {activeTab === 'Raid History' && lockerRoomId && (
+      {activeTab === 'Raid History' && lockerRoom?.id && (
         <RaidHistory clubId={clubId} />
       )}
 
-      {activeTab === 'Members' && lockerRoomId && (
-        <Members lockerRoomId={lockerRoomId} />
+      {activeTab === 'Members' && lockerRoom?.id && (
+        <Members lockerRoomId={lockerRoom.id} />
       )}
 
       {activeTab === 'Fixtures' && (

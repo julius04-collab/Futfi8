@@ -8,28 +8,48 @@ import { supabase } from '@/lib/supabase/client'
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/'
-  const [email, setEmail] = useState('')
+  const redirectTo = searchParams.get('redirect') || '/hot-takes'
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  async function handleEmailLogin(e: FormEvent) {
+  async function handleLogin(e: FormEvent) {
     e.preventDefault()
-    setError('')
     setLoading(true)
+    setError('')
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+    let loginEmail = identifier.trim()
+
+    if (!loginEmail.includes('@')) {
+      const cleanUsername = loginEmail.startsWith('@') ? loginEmail.slice(1) : loginEmail
+
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('username', cleanUsername)
+        .single()
+
+      if (userError || !userData?.email) {
+        setLoading(false)
+        setError('No account found with that username.')
+        return
+      }
+
+      loginEmail = userData.email
+    }
+
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
       password,
     })
 
     setLoading(false)
 
-    if (signInError) {
-      setError(signInError.message)
+    if (authError) {
+      setError(authError.message)
       return
     }
 
@@ -49,7 +69,7 @@ function LoginForm() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${getSiteUrl()}/api/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
       },
     })
 
@@ -63,11 +83,8 @@ function LoginForm() {
   return (
     <div>
       <div className="mb-8 text-center">
-        <h1
-          className="text-4xl font-extrabold tracking-tight"
-          style={{ fontFamily: 'var(--futfi8-typography-font-family-display)' }}
-        >
-          FUTFI8
+        <h1 className="text-4xl font-medium tracking-tight text-white">
+          FUT<span className="text-[#a855f7]">FI8</span>
         </h1>
         <p
           className="mt-1 text-sm"
@@ -104,27 +121,35 @@ function LoginForm() {
           </div>
         )}
 
-        <form onSubmit={handleEmailLogin} className="flex flex-col gap-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors placeholder:text-sm"
-            style={{
-              background: 'var(--futfi8-color-background-input)',
-              color: 'var(--futfi8-color-text-primary)',
-              border: '1px solid var(--futfi8-color-border-default)',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = 'var(--futfi8-color-border-accent)'
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = 'var(--futfi8-color-border-default)'
-            }}
-          />
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <div>
+            <label
+              className="mb-1 block text-xs font-medium uppercase tracking-wider"
+              style={{ color: 'var(--futfi8-color-text-muted)' }}
+            >
+              Username or Email
+            </label>
+            <input
+              type="text"
+              placeholder="Enter your username or email"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              required
+              autoComplete="username"
+              className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors placeholder:text-sm"
+              style={{
+                background: 'var(--futfi8-color-background-input)',
+                color: 'var(--futfi8-color-text-primary)',
+                border: '1px solid var(--futfi8-color-border-default)',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'var(--futfi8-color-border-accent)'
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'var(--futfi8-color-border-default)'
+              }}
+            />
+          </div>
 
           <div className="relative">
             <input

@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const next = requestUrl.searchParams.get('next') || '/dashboard';
 
   if (code) {
     const cookieStore = await cookies();
@@ -27,13 +28,14 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    try {
-      await supabase.auth.exchangeCodeForSession(code);
-    } catch (error) {
-      console.error('CRITICAL_OAUTH_EXCHANGE_FAILURE:', error);
-      return NextResponse.redirect(new URL('/login?error=callback_handshake_failed', request.url));
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (!error) {
+      return NextResponse.redirect(new URL(next, request.url));
     }
+
+    return NextResponse.redirect(new URL('/login?error=callback_handshake_failed', request.url));
   }
 
-  return NextResponse.redirect(new URL('/hot-takes', request.url));
+  return NextResponse.redirect(new URL(next, request.url));
 }

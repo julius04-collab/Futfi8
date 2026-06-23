@@ -14,13 +14,9 @@ export function useAuth() {
     let cancelled = false
 
     supabase.auth.getUser()
-      .then(({ data: { user: authUser }, error }) => {
+      .then(({ data: { user: authUser } }) => {
         if (cancelled) return
-        if (error || !authUser) {
-          if (error) {
-            supabase.auth.signOut().catch(() => {})
-            window.location.href = '/login'
-          }
+        if (!authUser) {
           if (!cancelled) setLoading(false)
           return
         }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent, useRef } from 'react'
+import { useState, FormEvent, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
@@ -19,6 +19,7 @@ export default function RegisterPage() {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [otpError, setOtpError] = useState('')
   const [verifying, setVerifying] = useState(false)
+  const [countdown, setCountdown] = useState(300)
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
 
   function clearError(field: 'username' | 'email' | 'password') {
@@ -58,7 +59,7 @@ export default function RegisterPage() {
 
     setLoading(true)
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -76,7 +77,37 @@ export default function RegisterPage() {
       return
     }
 
-    setShowOtpVerification(true)
+    if (data.user || data.session) {
+      setShowOtpVerification(true)
+    }
+  }
+
+  useEffect(() => {
+    if (!showOtpVerification) return
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [showOtpVerification])
+
+  async function handleResend() {
+    setOtpError('')
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    })
+    if (resendError) {
+      setOtpError(resendError.message)
+      return
+    }
+    setCountdown(300)
+    setOtp(['', '', '', '', '', ''])
   }
 
   async function handleVerifyOtp() {
@@ -123,11 +154,8 @@ export default function RegisterPage() {
   return (
     <div>
       <div className="mb-8 text-center">
-        <h1
-          className="text-4xl font-extrabold tracking-tight"
-          style={{ fontFamily: 'var(--futfi8-typography-font-family-display)' }}
-        >
-          FUTFI8
+        <h1 className="text-4xl font-medium tracking-tight text-white">
+          FUT<span className="text-[#a855f7]">FI8</span>
         </h1>
         <p
           className="mt-1 text-sm"
@@ -189,6 +217,23 @@ export default function RegisterPage() {
             <p className="mt-3 text-center text-xs text-red-400">{otpError}</p>
           )}
 
+          <div className="mt-4 flex items-center justify-between text-xs">
+            <span style={{ color: 'var(--futfi8-color-text-muted)' }}>
+              Code expires in {String(Math.floor(countdown / 60)).padStart(2, '0')}:{String(countdown % 60).padStart(2, '0')}
+            </span>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={countdown > 0}
+              className="font-medium transition-opacity disabled:opacity-30"
+              style={{
+                color: countdown > 0 ? 'var(--futfi8-color-text-muted)' : 'var(--futfi8-color-text-accent)',
+              }}
+            >
+              Resend Code
+            </button>
+          </div>
+
           <button
             onClick={handleVerifyOtp}
             disabled={otp.join('').length !== 6 || verifying}
@@ -202,6 +247,7 @@ export default function RegisterPage() {
           </button>
         </div>
       ) : (
+        <>
         <div
           className="rounded-xl p-6"
           style={{
@@ -233,6 +279,7 @@ export default function RegisterPage() {
             <div>
               <input
                 type="email"
+                name="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); clearError('email') }}
@@ -364,9 +411,7 @@ export default function RegisterPage() {
             </button>
           </form>
         </div>
-      )}
 
-      {!showOtpVerification && (
         <p
           className="mt-6 text-center text-sm"
           style={{ color: 'var(--futfi8-color-text-muted)' }}
@@ -380,6 +425,7 @@ export default function RegisterPage() {
             Sign in
           </Link>
         </p>
+        </>
       )}
 
     </div>

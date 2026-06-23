@@ -84,6 +84,21 @@ export default function PickTeamPage() {
 
       if (updateError) throw updateError
 
+      const { data: lockerRoom } = await supabase
+        .from('locker_rooms')
+        .select('id')
+        .eq('club_id', selectedClubId)
+        .maybeSingle()
+
+      if (lockerRoom?.id) {
+        await supabase
+          .from('memberships')
+          .upsert(
+            { user_id: user.id, locker_room_id: lockerRoom.id },
+            { onConflict: 'user_id,locker_room_id', ignoreDuplicates: true }
+          )
+      }
+
       router.refresh()
       router.push('/hot-takes')
     } catch (err) {

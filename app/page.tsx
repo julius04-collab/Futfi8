@@ -39,26 +39,26 @@ const CLUBS: Club[] = [
 ]
 
 const CREST_PATHS: Record<string, string> = {
-  ars: '/Images/crests/arsenal.png',
-  avl: '/Images/crests/aston-villa.png',
-  bou: '/Images/crests/bournemouth.png',
-  bre: '/Images/crests/brentford.png',
-  bha: '/Images/crests/brighton.png',
-  che: '/Images/crests/chelsea.png',
-  cov: '/Images/crests/coventry-city.png',
-  cry: '/Images/crests/crystal-palace.png',
-  eve: '/Images/crests/everton.png',
-  ful: '/Images/crests/fulham.png',
-  hul: '/Images/crests/hull-city.png',
-  ips: '/Images/crests/ipswich-town.png',
-  lee: '/Images/crests/leeds-united.png',
-  liv: '/Images/crests/liverpool.png',
-  mci: '/Images/crests/manchester-city.png',
-  mun: '/Images/crests/manchester-united.png',
-  new: '/Images/crests/newcastle-united.png',
-  nfo: '/Images/crests/nottingham-forest.png',
-  sun: '/Images/crests/sunderland.png',
-  tot: '/Images/crests/tottenham-hotspur.png',
+  ars: '/images/crests/arsenal.png',
+  avl: '/images/crests/aston-villa.png',
+  bou: '/images/crests/bournemouth.png',
+  bre: '/images/crests/brentford.png',
+  bha: '/images/crests/brighton.png',
+  che: '/images/crests/chelsea.png',
+  cov: '/images/crests/coventry-city.png',
+  cry: '/images/crests/crystal-palace.png',
+  eve: '/images/crests/everton.png',
+  ful: '/images/crests/fulham.png',
+  hul: '/images/crests/hull-city.png',
+  ips: '/images/crests/ipswich-town.png',
+  lee: '/images/crests/leeds-united.png',
+  liv: '/images/crests/liverpool.png',
+  mci: '/images/crests/manchester-city.png',
+  mun: '/images/crests/manchester-united.png',
+  new: '/images/crests/newcastle-united.png',
+  nfo: '/images/crests/nottingham-forest.png',
+  sun: '/images/crests/sunderland.png',
+  tot: '/images/crests/tottenham-hotspur.png',
 }
 
 function ClubCrest({ club, size = 44 }: { club: Club; size?: number }) {
@@ -171,7 +171,7 @@ function Hero() {
   return (
     <section
       id="top"
-      className="relative min-h-[85vh] flex flex-col justify-between bg-[url('/Images/hero-tunnel.jpg')] bg-cover bg-center bg-black"
+      className="relative min-h-[85vh] flex flex-col justify-between bg-[url('/images/hero-tunnel.jpg')] bg-cover bg-center bg-black"
     >
       <div className="absolute inset-0 bg-black/60" />
 
@@ -255,7 +255,7 @@ function RaidSection() {
     <section id="raid" className="relative border-b border-slate-800/60 bg-black py-24 sm:py-32">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20">
         <div className="relative">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-slate-800/60 bg-[url('/Images/players/saka.jpg')] bg-cover bg-center">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-slate-800/60 bg-[url('/images/players/saka.jpg')] bg-cover bg-center">
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
             <div className="relative z-10 flex h-full flex-col justify-end items-start p-8 md:p-12">
               <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent-muted">Raid · Live</div>

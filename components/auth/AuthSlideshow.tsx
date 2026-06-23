@@ -6,27 +6,27 @@ const slides = [
   {
     title: 'The football. The fight.',
     subtitle: 'Premier League fan community powered by passion, banter, and loyalty.',
-    image: '/Images/players/bruno.jpg',
+    image: '/images/players/bruno.jpg',
   },
   {
     title: 'Your Locker Room.',
     subtitle: 'Your club. Your community. Your takes. One home for every fan.',
-    image: '/Images/players/haaland.jpg',
+    image: '/images/players/haaland.jpg',
   },
   {
     title: 'Win. Raid. Conquer.',
     subtitle: 'Victory earns you the right to post in the losing club\u2019s house.',
-    image: '/Images/players/palmer.jpg',
+    image: '/images/players/palmer.jpg',
   },
   {
     title: 'Hot Takes Board.',
     subtitle: 'The best Premier League takes. No filter. No mercy. All passion.',
-    image: '/Images/players/saka.jpg',
+    image: '/images/players/saka.jpg',
   },
   {
     title: 'Build Your Reputation.',
     subtitle: 'Earn Fan Cred, unlock badges, and become a club Legend.',
-    image: '/Images/players/vandijk.jpg',
+    image: '/images/players/vandijk.jpg',
   },
 ]
 

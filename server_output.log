@@ -1,0 +1,12 @@
+
+> futfi8_next@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.236.159:3000
+- Environments: .env.local
+✓ Ready in 2.9s
+
+ POST /api/posts 201 in 3.9s (next.js: 2.0s, application-code: 1903ms)
+✓ Finished filesystem cache database compaction in 13.8s

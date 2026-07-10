@@ -15,7 +15,7 @@ const createPostSchema = z.object({
     .min(1, { message: 'Content cannot be empty' })
     .max(MAX_POST_LENGTH, { message: `Content exceeds ${MAX_POST_LENGTH} characters` }),
   type: z.enum(['standard', 'raid', 'match_thread', 'hot_take'], {
-    errorMap: () => ({ message: 'type must be one of: standard, raid, match_thread, hot_take' }),
+    message: 'type must be one of: standard, raid, match_thread, hot_take',
   }),
   match_id: z.string().uuid().optional().nullable(),
   raid_window_id: z.string().uuid().optional().nullable(),

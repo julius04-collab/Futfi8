@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 // ── SCHEMA ────────────────────────────────────────────────────────────────────
 const reactSchema = z.object({
   type: z.enum(['upvote', 'fire', 'laugh', 'rage'], {
-    errorMap: () => ({ message: 'type must be one of: upvote, fire, laugh, rage' }),
+    message: 'type must be one of: upvote, fire, laugh, rage',
   }),
 })
 

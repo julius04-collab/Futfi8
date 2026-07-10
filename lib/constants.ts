@@ -18,7 +18,9 @@ export const MAX_RAID_POST_LENGTH = 280
 export const MAX_POST_LENGTH = 500
 
 export const PREMIER_LEAGUE_ID = 39
-export const PREMIER_LEAGUE_SEASON = 2026
+export const PREMIER_LEAGUE_CODE = 'PL'
+// Development season — change to 2025 on paid plan for 2025/26 data
+export const PREMIER_LEAGUE_SEASON = 2024
 
 // Toxicity thresholds for Hugging Face moderation (unitary/toxic-bert)
 export const TOXICITY_THRESHOLD_STANDARD = 0.85

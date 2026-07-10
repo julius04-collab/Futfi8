@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/auth/getAuthUser'
-import { UUID_REGEX } from '@/lib/constants'
 import { joinClub, getLastClubSwitch, canSwitchClub, switchClub } from '@/lib/membership'
 
 export const dynamic = 'force-dynamic'
+
+// ── SCHEMA ────────────────────────────────────────────────────────────────────
+const membershipSchema = z.object({
+  locker_room_id: z.string().uuid({ message: 'locker_room_id must be a valid UUID' }),
+})
 
 export async function GET(req: NextRequest) {
   const user = await getAuthUser(req)
@@ -26,12 +31,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await req.json()
-  const { locker_room_id } = body
-
-  if (!locker_room_id || !UUID_REGEX.test(locker_room_id)) {
-    return NextResponse.json({ error: 'Invalid locker_room_id' }, { status: 400 })
+  // ── ZOD VALIDATION ──────────────────────────────────────────────────────────
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: 'Request body must be valid JSON' } },
+      { status: 400 }
+    )
   }
+
+  const parsed = membershipSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid request body',
+          details: parsed.error.flatten(),
+        },
+      },
+      { status: 400 }
+    )
+  }
+
+  const { locker_room_id } = parsed.data
 
   const { membership, isNew } = await joinClub(user.id, locker_room_id)
 
@@ -44,19 +69,39 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await req.json()
-  const { locker_room_id } = body
-
-  if (!locker_room_id || !UUID_REGEX.test(locker_room_id)) {
-    return NextResponse.json({ error: 'Invalid locker_room_id' }, { status: 400 })
+  // ── ZOD VALIDATION ──────────────────────────────────────────────────────────
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: 'Request body must be valid JSON' } },
+      { status: 400 }
+    )
   }
+
+  const parsed = membershipSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid request body',
+          details: parsed.error.flatten(),
+        },
+      },
+      { status: 400 }
+    )
+  }
+
+  const { locker_room_id } = parsed.data
 
   const lastSwitch = await getLastClubSwitch(user.id)
   const { allowed, daysLeft } = canSwitchClub(lastSwitch)
 
   if (!allowed) {
     return NextResponse.json(
-      { error: `Club switch available in ${daysLeft} day(s)` },
+      { error: { code: 'CLUB_SWITCH_COOLDOWN', message: `Club switch available in ${daysLeft} day(s)` } },
       { status: 429 }
     )
   }

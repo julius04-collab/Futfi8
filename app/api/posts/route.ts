@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/auth/getAuthUser'
 import { MAX_POST_LENGTH, MAX_RAID_POST_LENGTH, UUID_REGEX, TOXICITY_THRESHOLD_STANDARD } from '@/lib/constants'
 import { moderateContent } from '@/lib/huggingface/client'
 
 export const dynamic = 'force-dynamic'
+
+// ── SCHEMA ────────────────────────────────────────────────────────────────────
+const createPostSchema = z.object({
+  locker_room_id: z.string().uuid({ message: 'locker_room_id must be a valid UUID' }),
+  content: z
+    .string()
+    .min(1, { message: 'Content cannot be empty' })
+    .max(MAX_POST_LENGTH, { message: `Content exceeds ${MAX_POST_LENGTH} characters` }),
+  type: z.enum(['standard', 'raid', 'match_thread', 'hot_take'], {
+    errorMap: () => ({ message: 'type must be one of: standard, raid, match_thread, hot_take' }),
+  }),
+  match_id: z.string().uuid().optional().nullable(),
+  raid_window_id: z.string().uuid().optional().nullable(),
+})
 
 export async function GET(req: NextRequest) {
   const user = await getAuthUser(req)
@@ -52,27 +67,44 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await req.json()
-  const { locker_room_id, content, type, match_id, raid_window_id } = body
-
-  if (!locker_room_id || !UUID_REGEX.test(locker_room_id)) {
-    return NextResponse.json({ error: 'Invalid locker_room_id' }, { status: 400 })
-  }
-
-  if (!content || typeof content !== 'string') {
-    return NextResponse.json({ error: 'Content is required' }, { status: 400 })
-  }
-
-  const maxLength = type === 'raid' ? MAX_RAID_POST_LENGTH : MAX_POST_LENGTH
-  if (content.length > maxLength) {
+  // ── ZOD VALIDATION ──────────────────────────────────────────────────────────
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
     return NextResponse.json(
-      { error: `Content exceeds ${maxLength} characters` },
+      { error: { code: 'VALIDATION_ERROR', message: 'Request body must be valid JSON' } },
       { status: 400 }
     )
   }
 
-  if (!type || !['standard', 'raid', 'match_thread', 'hot_take'].includes(type)) {
-    return NextResponse.json({ error: 'Invalid post type' }, { status: 400 })
+  const parsed = createPostSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid request body',
+          details: parsed.error.flatten(),
+        },
+      },
+      { status: 400 }
+    )
+  }
+
+  const { locker_room_id, content, type, match_id, raid_window_id } = parsed.data
+
+  // Raid posts may be longer — enforce separately after schema validation
+  if (type === 'raid' && content.length > MAX_RAID_POST_LENGTH) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: `Raid post content exceeds ${MAX_RAID_POST_LENGTH} characters`,
+        },
+      },
+      { status: 400 }
+    )
   }
 
   // Content moderation
@@ -87,6 +119,28 @@ export async function POST(req: NextRequest) {
     }
   } catch {
     // If moderation service is unavailable, allow post through (fail open)
+  }
+
+  // Verify user's home_club_id matches this locker room's club_id
+  const [{ data: posterUser }, { data: targetRoom }] = await Promise.all([
+    supabaseAdmin
+      .from('users')
+      .select('home_club_id')
+      .eq('id', user.id)
+      .single(),
+    supabaseAdmin
+      .from('locker_rooms')
+      .select('club_id')
+      .eq('id', locker_room_id)
+      .single(),
+  ])
+
+  if (!posterUser?.home_club_id || !targetRoom) {
+    return NextResponse.json({ error: 'Cannot post in this locker room' }, { status: 403 })
+  }
+
+  if (posterUser.home_club_id !== targetRoom.club_id) {
+    return NextResponse.json({ error: 'Cannot post in another club\'s locker room' }, { status: 403 })
   }
 
   // Verify user is a member of this locker room

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { getAuthToken } from '@/lib/supabase/get-auth-token'
 import { PostCard } from './PostCard'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 export type PostWithDetails = {
@@ -113,9 +114,18 @@ export function PostFeed({ lockerRoomId, currentUserId, type }: PostFeedProps) {
   }, [lockerRoomId, type, offset])
 
   async function handleReact(postId: string, reactionType: string) {
+    const token = await getAuthToken()
+    if (!token) {
+      console.error('Reaction failed: not authenticated')
+      return
+    }
+
     const res = await fetch(`/api/posts/${postId}/react`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ type: reactionType }),
     })
 

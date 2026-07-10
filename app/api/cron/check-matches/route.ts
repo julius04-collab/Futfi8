@@ -1,9 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { PREMIER_LEAGUE_ID, PREMIER_LEAGUE_SEASON, RAID_WINDOW_DURATION_MS } from '@/lib/constants'
+import { getCompetitionMatches } from '@/lib/football-api/client'
+import { RAID_WINDOW_DURATION_MS } from '@/lib/constants'
 import { notifyLockerRoomMembers } from '@/lib/notifications'
+import type { FootballDataMatch } from '@/lib/football-api/client'
 
 export const dynamic = 'force-dynamic'
+
+async function buildTeamToClubMap(): Promise<Map<number, { id: string; name: string }>> {
+  const { data: clubs } = await supabaseAdmin
+    .from('clubs')
+    .select('id, name, football_data_team_id')
+
+  const map = new Map<number, { id: string; name: string }>()
+  if (clubs) {
+    for (const c of clubs) {
+      if (c.football_data_team_id) map.set(c.football_data_team_id, { id: c.id, name: c.name })
+    }
+  }
+  return map
+}
+
+async function getOrCreateMatch(match: FootballDataMatch, clubMap: Map<number, { id: string; name: string }>): Promise<string | null> {
+  const apiMatchId = match.id
+
+  const { data: existing } = await supabaseAdmin
+    .from('matches')
+    .select('id, status')
+    .eq('api_match_id', apiMatchId)
+    .single()
+
+  if (existing) return existing.id
+
+  const homeClub = clubMap.get(match.homeTeam.id)
+  const awayClub = clubMap.get(match.awayTeam.id)
+  if (!homeClub || !awayClub) return null
+
+  const { data: created } = await supabaseAdmin
+    .from('matches')
+    .insert({
+      home_club_id: homeClub.id,
+      away_club_id: awayClub.id,
+      kickoff_at: match.utcDate,
+      status: 'scheduled',
+      api_match_id: apiMatchId,
+    })
+    .select('id')
+    .single()
+
+  return created?.id ?? null
+}
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('Authorization')
@@ -14,40 +60,28 @@ export async function GET(req: NextRequest) {
   const jobStart = Date.now()
 
   try {
-    const apiKey = process.env.FOOTBALL_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({ error: 'FOOTBALL_API_KEY not configured' }, { status: 500 })
-    }
+    const today = new Date().toISOString().split('T')[0]
 
-    const url = `https://v3.football.api-sports.io/fixtures?league=${PREMIER_LEAGUE_ID}&season=${PREMIER_LEAGUE_SEASON}&status=FT`
-    const res = await fetch(url, {
-      headers: {
-        'x-rapidapi-key': apiKey,
-        'x-rapidapi-host': 'v3.football.api-sports.io',
-      },
-    })
+    const finishedMatches = await getCompetitionMatches('FINISHED,AWARDED', today, today)
+    const clubMap = await buildTeamToClubMap()
 
-    if (!res.ok) {
-      throw new Error(`API-Football error: ${res.status} ${res.statusText}`)
-    }
-
-    const { response: fixtures } = await res.json()
     let processed = 0
     let raidsCreated = 0
 
-    for (const fixture of fixtures) {
-      const apiMatchId = fixture.fixture.id
+    for (const fixture of finishedMatches) {
+      const matchId = await getOrCreateMatch(fixture, clubMap)
+      if (!matchId) continue
 
       const { data: match } = await supabaseAdmin
         .from('matches')
         .select('id, status, home_club_id, away_club_id')
-        .eq('api_match_id', apiMatchId)
+        .eq('id', matchId)
         .single()
 
       if (!match || match.status === 'finished') continue
 
-      const homeScore = fixture.goals.home ?? 0
-      const awayScore = fixture.goals.away ?? 0
+      const homeScore = fixture.score.fullTime.home ?? 0
+      const awayScore = fixture.score.fullTime.away ?? 0
 
       await supabaseAdmin
         .from('matches')
@@ -88,7 +122,7 @@ export async function GET(req: NextRequest) {
         continue
       }
 
-      const { error: roomUpdateError } = await supabaseAdmin
+      await supabaseAdmin
         .from('locker_rooms')
         .update({
           is_under_raid: true,
@@ -96,10 +130,6 @@ export async function GET(req: NextRequest) {
           raid_expires_at: closesAt.toISOString(),
         })
         .eq('club_id', loserClubId)
-
-      if (roomUpdateError) {
-        console.error('[CRON check-matches] Failed to update locker_rooms:', roomUpdateError)
-      }
 
       raidsCreated++
 

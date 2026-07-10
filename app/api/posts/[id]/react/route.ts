@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/auth/getAuthUser'
 import { FAN_CRED } from '@/lib/constants'
@@ -6,7 +7,12 @@ import { createNotification } from '@/lib/notifications'
 
 export const dynamic = 'force-dynamic'
 
-const REACTION_TYPES = ['upvote', 'fire', 'laugh', 'rage'] as const
+// ── SCHEMA ────────────────────────────────────────────────────────────────────
+const reactSchema = z.object({
+  type: z.enum(['upvote', 'fire', 'laugh', 'rage'], {
+    errorMap: () => ({ message: 'type must be one of: upvote, fire, laugh, rage' }),
+  }),
+})
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getAuthUser(req)
@@ -15,15 +21,33 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params
-  const body = await req.json()
-  const { type } = body
 
-  if (!type || !REACTION_TYPES.includes(type)) {
+  // ── ZOD VALIDATION ──────────────────────────────────────────────────────────
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
     return NextResponse.json(
-      { error: `Invalid reaction type. Must be one of: ${REACTION_TYPES.join(', ')}` },
+      { error: { code: 'VALIDATION_ERROR', message: 'Request body must be valid JSON' } },
       { status: 400 }
     )
   }
+
+  const parsed = reactSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid request body',
+          details: parsed.error.flatten(),
+        },
+      },
+      { status: 400 }
+    )
+  }
+
+  const { type } = parsed.data
 
   const { data: post } = await supabaseAdmin
     .from('posts')

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Avatar } from '@/components/ui/Avatar'
 import { MAX_RAID_POST_LENGTH } from '@/lib/constants'
+import { useCreatePost } from '@/hooks/use-create-post'
 
 type RaidComposeBoxProps = {
   username: string
@@ -14,9 +15,8 @@ type RaidComposeBoxProps = {
 
 export function RaidComposeBox({ username, avatarUrl, raidWindowId, defendingLockerRoomId, onRaidPosted }: RaidComposeBoxProps) {
   const [content, setContent] = useState('')
-  const [posting, setPosting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const { createPost, isSubmitting, error } = useCreatePost()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -28,26 +28,17 @@ export function RaidComposeBox({ username, avatarUrl, raidWindowId, defendingLoc
 
   async function handleSubmit() {
     const trimmed = content.trim()
-    if (!trimmed || posting || submitted) return
-    setPosting(true)
-    setError(null)
-
-    const res = await fetch(`/api/raids/${raidWindowId}/post`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: trimmed, locker_room_id: defendingLockerRoomId }),
+    if (!trimmed || isSubmitting || submitted) return
+    const result = await createPost({
+      endpoint: `/api/raids/${raidWindowId}/post`,
+      content: trimmed,
+      locker_room_id: defendingLockerRoomId,
+      type: 'raid',
+      raid_window_id: raidWindowId,
     })
-
-    if (!res.ok) {
-      const err = await res.json()
-      setError(err.error || 'Failed to post raid')
-      setPosting(false)
-      return
-    }
-
+    if (!result.success) return
     setSubmitted(true)
     setContent('')
-    setPosting(false)
     onRaidPosted()
   }
 
@@ -105,16 +96,16 @@ export function RaidComposeBox({ username, avatarUrl, raidWindowId, defendingLoc
           </span>
           <button
             onClick={handleSubmit}
-            disabled={!content.trim() || posting || isOverLimit}
+            disabled={!content.trim() || isSubmitting || isOverLimit}
             className={`
               rounded-full font-bold px-4 py-1.5 text-sm transition-all
-              ${content.trim() && !posting && !isOverLimit
+              ${content.trim() && !isSubmitting && !isOverLimit
                 ? 'bg-purple-600 text-white cursor-pointer opacity-100'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}
-              ${posting ? 'opacity-60' : ''}
+              ${isSubmitting ? 'opacity-60' : ''}
             `}
           >
-            {posting ? 'Posting...' : 'Raid!'}
+            {isSubmitting ? 'Posting...' : 'Raid!'}
           </button>
         </div>
       </div>

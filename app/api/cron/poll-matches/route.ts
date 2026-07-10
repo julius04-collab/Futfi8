@@ -1,20 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { getLiveFixtures, isMatchFinished, isMatchLive } from '@/lib/football-api/client'
+import { getCompetitionMatches, isMatchFinished, isMatchLive } from '@/lib/football-api/client'
 import { RAID_WINDOW_DURATION_MS } from '@/lib/constants'
 import { notifyLockerRoomMembers } from '@/lib/notifications'
-import type { Fixture } from '@/lib/football-api/client'
+import type { FootballDataMatch } from '@/lib/football-api/client'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * Cron: Poll Match Results
- * Schedule: Every 2 minutes during live matches
- * Action: Polls API-Football for live/finished fixtures, updates match status,
- *         and triggers raid windows on decisive results.
- */
+async function buildTeamToClubMap(): Promise<Map<number, { id: string }>> {
+  const { data: clubs } = await supabaseAdmin
+    .from('clubs')
+    .select('id, football_data_team_id')
+
+  const map = new Map<number, { id: string }>()
+  if (clubs) {
+    for (const c of clubs) {
+      if (c.football_data_team_id) map.set(c.football_data_team_id, { id: c.id })
+    }
+  }
+  return map
+}
+
+async function ensureMatchExists(fixture: FootballDataMatch, clubMap: Map<number, { id: string }>): Promise<string | null> {
+  const apiMatchId = fixture.id
+
+  const { data: existing } = await supabaseAdmin
+    .from('matches')
+    .select('id')
+    .eq('api_match_id', apiMatchId)
+    .single()
+
+  if (existing) return existing.id
+
+  const homeClub = clubMap.get(fixture.homeTeam.id)
+  const awayClub = clubMap.get(fixture.awayTeam.id)
+  if (!homeClub || !awayClub) return null
+
+  const { data: created } = await supabaseAdmin
+    .from('matches')
+    .insert({
+      home_club_id: homeClub.id,
+      away_club_id: awayClub.id,
+      kickoff_at: fixture.utcDate,
+      status: 'scheduled',
+      api_match_id: apiMatchId,
+    })
+    .select('id')
+    .single()
+
+  return created?.id ?? null
+}
+
 export async function GET(req: NextRequest) {
-  // 1. Verify cron secret
   const authHeader = req.headers.get('Authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -23,64 +60,60 @@ export async function GET(req: NextRequest) {
   const jobStart = Date.now()
 
   try {
-    // 2. Fetch live fixtures from API-Football
-    const liveFixtures = await getLiveFixtures()
-
-    // Also check for recently finished matches not yet processed
     const today = new Date().toISOString().split('T')[0]
-    const { getFixturesByDate } = await import('@/lib/football-api/client')
-    const todayFixtures = await getFixturesByDate(today)
 
-    // Combine and deduplicate
-    const allFixtures = new Map<number, Fixture>()
-    for (const f of [...liveFixtures, ...todayFixtures]) {
-      allFixtures.set(f.fixture.id, f)
+    const [liveMatches, todayFinished] = await Promise.all([
+      getCompetitionMatches('IN_PLAY,PAUSED'),
+      getCompetitionMatches('FINISHED,AWARDED', today, today),
+    ])
+
+    const allFixtures = new Map<number, FootballDataMatch>()
+    for (const f of [...liveMatches, ...todayFinished]) {
+      allFixtures.set(f.id, f)
     }
+
+    const clubMap = await buildTeamToClubMap()
 
     let updatedCount = 0
     let raidWindowsCreated = 0
 
     for (const fixture of allFixtures.values()) {
-      const apiMatchId = fixture.fixture.id
-      const statusShort = fixture.fixture.status.short
+      const matchId = await ensureMatchExists(fixture, clubMap)
+      if (!matchId) continue
 
-      // 3. Find this match in our database
       const { data: match } = await supabaseAdmin
         .from('matches')
         .select('id, status, home_club_id, away_club_id')
-        .eq('api_match_id', apiMatchId)
+        .eq('id', matchId)
         .single()
 
-      if (!match) continue // Match not tracked in our DB
+      if (!match) continue
 
-      // 4. Update live matches
-      if (isMatchLive(statusShort) && match.status !== 'live') {
+      if (isMatchLive(fixture.status) && match.status !== 'live') {
         await supabaseAdmin
           .from('matches')
           .update({
             status: 'live',
-            home_score: fixture.goals.home,
-            away_score: fixture.goals.away,
+            home_score: fixture.score.fullTime.home,
+            away_score: fixture.score.fullTime.away,
           })
           .eq('id', match.id)
         updatedCount++
       }
 
-      // 5. Update scores for live matches
-      if (isMatchLive(statusShort) && match.status === 'live') {
+      if (isMatchLive(fixture.status) && match.status === 'live') {
         await supabaseAdmin
           .from('matches')
           .update({
-            home_score: fixture.goals.home,
-            away_score: fixture.goals.away,
+            home_score: fixture.score.fullTime.home,
+            away_score: fixture.score.fullTime.away,
           })
           .eq('id', match.id)
       }
 
-      // 6. Detect finished matches and trigger raid windows
-      if (isMatchFinished(statusShort) && match.status !== 'finished') {
-        const homeScore = fixture.goals.home ?? 0
-        const awayScore = fixture.goals.away ?? 0
+      if (isMatchFinished(fixture.status) && match.status !== 'finished') {
+        const homeScore = fixture.score.fullTime.home ?? 0
+        const awayScore = fixture.score.fullTime.away ?? 0
 
         await supabaseAdmin
           .from('matches')
@@ -92,7 +125,6 @@ export async function GET(req: NextRequest) {
           .eq('id', match.id)
         updatedCount++
 
-        // Only create raid window if decisive result (not a draw)
         if (homeScore !== awayScore) {
           const winnerClubId = homeScore > awayScore ? match.home_club_id : match.away_club_id
           const loserClubId = homeScore > awayScore ? match.away_club_id : match.home_club_id
@@ -100,7 +132,6 @@ export async function GET(req: NextRequest) {
           const now = new Date()
           const closesAt = new Date(now.getTime() + RAID_WINDOW_DURATION_MS)
 
-          // Check if raid window already exists for this match
           const { data: existingWindow } = await supabaseAdmin
             .from('raid_windows')
             .select('id')
@@ -121,9 +152,7 @@ export async function GET(req: NextRequest) {
 
             if (!raidError) {
               raidWindowsCreated++
-              console.log(`[CRON poll-matches] Raid window created: ${winnerClubId} → ${loserClubId}`)
 
-              // Sync denormalized raid status on locker_rooms
               await supabaseAdmin
                 .from('locker_rooms')
                 .update({
@@ -133,7 +162,6 @@ export async function GET(req: NextRequest) {
                 })
                 .eq('club_id', loserClubId)
 
-              // Notify defending club's locker room members
               const { data: defendingRoom } = await supabaseAdmin
                 .from('locker_rooms')
                 .select('id')

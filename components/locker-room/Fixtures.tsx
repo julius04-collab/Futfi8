@@ -16,8 +16,8 @@ type FixtureItem = {
   status: string
   home_score: number | null
   away_score: number | null
-  home_club: { name: string; short_name: string; primary_color: string }
-  away_club: { name: string; short_name: string; primary_color: string }
+  home_club: { name: string; short_name: string; primary_color: string; crest: string }
+  away_club: { name: string; short_name: string; primary_color: string; crest: string }
 }
 
 type FixturesProps = {
@@ -44,20 +44,51 @@ export function Fixtures({ clubId }: FixturesProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase
-      .from('matches')
-      .select(`
-        id, home_club_id, away_club_id, kickoff_at, status, home_score, away_score,
-        home_club:clubs!home_club_id(name, short_name, primary_color),
-        away_club:clubs!away_club_id(name, short_name, primary_color)
-      `)
-      .or(`home_club_id.eq.${clubId},away_club_id.eq.${clubId}`)
-      .order('kickoff_at', { ascending: true })
-      .limit(50)
-      .then(({ data, error }) => {
-        if (!error && data) setFixtures(data as unknown as FixtureItem[])
+    let cancelled = false
+
+    async function load() {
+      try {
+        const res = await fetch(`/api/football/fixtures?club_id=${clubId}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (!cancelled && data.fixtures?.length) {
+            setFixtures(data.fixtures)
+            setLoading(false)
+            return
+          }
+        }
+      } catch {
+      }
+
+      if (cancelled) return
+
+      const { data, error } = await supabase
+        .from('matches')
+        .select(`
+          id, home_club_id, away_club_id, kickoff_at, status, home_score, away_score,
+          home_club:clubs!home_club_id(name, short_name, primary_color, crest_url),
+          away_club:clubs!away_club_id(name, short_name, primary_color, crest_url)
+        `)
+        .or(`home_club_id.eq.${clubId},away_club_id.eq.${clubId}`)
+        .eq('status', 'scheduled')
+        .order('kickoff_at', { ascending: true })
+        .limit(50)
+
+      if (!cancelled) {
+        if (!error && data) {
+          const mapped = (data as any[]).map((m) => ({
+            ...m,
+            home_club: { ...m.home_club, crest: m.home_club?.crest_url ?? '' },
+            away_club: { ...m.away_club, crest: m.away_club?.crest_url ?? '' },
+          }))
+          setFixtures(mapped as unknown as FixtureItem[])
+        }
         setLoading(false)
-      })
+      }
+    }
+
+    load()
+    return () => { cancelled = true }
   }, [clubId])
 
   if (loading) return <div className="flex justify-center py-12"><LoadingBar /></div>
@@ -83,11 +114,13 @@ export function Fixtures({ clubId }: FixturesProps) {
           <Card>
             <div className="flex items-center gap-3">
               <div className="flex flex-1 flex-col items-center gap-1">
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold"
-                  style={{ background: match.home_club.primary_color, color: '#fff' }}
-                >
-                  {match.home_club.short_name}
+                <div className="flex h-10 w-10 items-center justify-center">
+                  <img
+                    src={match.home_club.crest}
+                    alt={match.home_club.short_name}
+                    className="h-10 w-10 object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
                 </div>
                 <span className="text-[10px] truncate max-w-[70px] text-center" style={{ color: 'var(--futfi8-color-text-muted)' }}>
                   {match.home_club.short_name}
@@ -128,11 +161,13 @@ export function Fixtures({ clubId }: FixturesProps) {
               </div>
 
               <div className="flex flex-1 flex-col items-center gap-1">
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold"
-                  style={{ background: match.away_club.primary_color, color: '#fff' }}
-                >
-                  {match.away_club.short_name}
+                <div className="flex h-10 w-10 items-center justify-center">
+                  <img
+                    src={match.away_club.crest}
+                    alt={match.away_club.short_name}
+                    className="h-10 w-10 object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
                 </div>
                 <span className="text-[10px] truncate max-w-[70px] text-center" style={{ color: 'var(--futfi8-color-text-muted)' }}>
                   {match.away_club.short_name}

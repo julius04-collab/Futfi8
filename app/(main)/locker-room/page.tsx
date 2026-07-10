@@ -1,56 +1,31 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { createServerComponentClient } from '@/lib/supabase/server-component'
+import { supabaseAdmin } from '@/lib/supabase/server'
+import { getHomeClubServer } from '@/lib/get-home-club-server'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
-import { LoadingBar } from '@/components/ui/LoadingBar'
+export default async function LockerRoomRedirectPage() {
+  const supabase = await createServerComponentClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-async function findDefaultClubId(): Promise<string | null> {
-  const { data } = await supabase
+  if (!user) {
+    redirect('/login')
+  }
+
+  const { homeClub } = await getHomeClubServer(user.id)
+
+  if (homeClub?.id) {
+    redirect(`/locker-room/${homeClub.id}`)
+  }
+
+  const { data } = await supabaseAdmin
     .from('clubs')
     .select('id')
     .eq('short_name', 'MUN')
     .maybeSingle()
-  return data?.id ?? null
-}
 
-export default function LockerRoomRedirectPage() {
-  const router = useRouter()
+  if (data?.id) {
+    redirect(`/locker-room/${data.id}`)
+  }
 
-  useEffect(() => {
-    let cancelled = false
-    supabase.auth
-      .getUser()
-      .then(({ data: { user } }) => {
-        if (cancelled) return
-        if (!user) {
-          router.push('/login')
-          return
-        }
-        supabase
-          .from('users')
-          .select('home_club_id')
-          .eq('id', user.id)
-          .single()
-          .then(async ({ data }) => {
-            if (cancelled) return
-            const clubId = data?.home_club_id ?? await findDefaultClubId()
-            if (clubId) {
-              router.push(`/locker-room/${clubId}`)
-            } else {
-              router.push('/hot-takes')
-            }
-          })
-      })
-      .catch(() => {
-        if (!cancelled) router.push('/login')
-      })
-    return () => { cancelled = true }
-  }, [router])
-
-  return (
-    <div className="flex flex-1 items-center justify-center py-16">
-      <LoadingBar />
-    </div>
-  )
+  redirect('/hot-takes')
 }

@@ -1,28 +1,21 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
+import { useCreatePost } from '@/hooks/use-create-post'
 import { Avatar } from '@/components/ui/Avatar'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-
-interface Profile {
-  id: string
-  username: string
-  avatar_url?: string | null
-  home_club_id?: string | null
-}
+import { useHomeClub } from '@/hooks/use-home-club'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { homeClub, userId, username, avatarUrl, isLoading } = useHomeClub()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showPostModal, setShowPostModal] = useState(false)
   const [modalPostContent, setModalPostContent] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [homeLockerRoomId, setHomeLockerRoomId] = useState<string | null>(null)
+  const { createPost, isSubmitting } = useCreatePost()
   const profileMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -36,41 +29,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }, [])
 
   useEffect(() => {
-    let cancelled = false
-    supabase.auth.getUser()
-      .then(({ data: { user } }) => {
-        if (!user) {
-          router.push('/login')
-          return
-        }
-        supabase
-          .from('users')
-          .select('id, username, avatar_url, home_club_id')
-          .eq('id', user.id)
-          .single()
-          .then(({ data }) => {
-            if (cancelled) return
-            if (data) {
-              setProfile(data)
-              if (data.home_club_id) {
-                supabase
-                  .from('locker_rooms')
-                  .select('id')
-                  .eq('club_id', data.home_club_id)
-                  .maybeSingle()
-                  .then(({ data: lr }) => {
-                    if (lr?.id) setHomeLockerRoomId(lr.id)
-                  })
-              }
-            }
-            setLoading(false)
-          })
-      })
-      .catch(() => {
-        if (!cancelled) router.push('/login')
-      })
-    return () => { cancelled = true }
-  }, [router])
+    if (!isLoading && !userId) {
+      router.push('/login')
+    }
+  }, [isLoading, userId, router])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -78,31 +40,15 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }
 
   const handleCreatePostFromModal = async () => {
-    if (!modalPostContent.trim() || !profile) return
-    setSubmitting(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
-      const res = await fetch('/api/posts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          locker_room_id: homeLockerRoomId,
-          content: modalPostContent.trim(),
-          type: 'hot_take',
-        }),
-      })
-      if (res.ok) {
-        setModalPostContent('')
-        setShowPostModal(false)
-      }
-    } catch (err) {
-      console.error('Failed to create post:', err)
-    } finally {
-      setSubmitting(false)
+    if (!modalPostContent.trim() || !userId || isSubmitting) return
+    const result = await createPost({
+      locker_room_id: homeClub?.locker_room_id ?? undefined,
+      content: modalPostContent.trim(),
+      type: 'hot_take',
+    })
+    if (result.success) {
+      setModalPostContent('')
+      setShowPostModal(false)
     }
   }
 
@@ -135,7 +81,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-full flex-1 items-center justify-center bg-[#0b0c10]">
         <LoadingBar />
@@ -145,10 +91,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen bg-[#0b0c10] text-white flex justify-center selection:bg-purple-500/30 overflow-x-hidden pb-16 md:pb-0">
-      <div className="w-full max-w-[1250px] flex px-0 sm:px-4 md:px-0">
+      <div className="w-full max-w-[1440px] flex px-0 sm:px-4 md:px-0">
 
         {/* DESKTOP SIDEBAR — hidden on mobile, icon-only on md, full on lg */}
-        <aside className="hidden md:flex w-[80px] lg:w-[275px] h-screen sticky top-0 flex-col justify-between border-r border-[#1e2230] px-2 lg:px-4 py-6 z-10 flex-shrink-0">
+        <aside className="hidden md:flex w-[72px] lg:w-[240px] h-screen sticky top-0 flex-col justify-between border-r border-[#1e2230] px-2 lg:px-4 py-6 z-10 flex-shrink-0">
           <div className="space-y-6">
             <div className="px-3 flex items-center gap-2 cursor-pointer justify-center lg:justify-start" onClick={() => router.push('/hot-takes')}>
               <h1 className="text-2xl font-medium tracking-tight text-white select-none hidden lg:block">
@@ -200,7 +146,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   className="w-full text-left px-3.5 py-2.5 text-sm hover:bg-red-950/20 text-red-400 hover:text-red-300 rounded-lg transition font-medium flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                  <span>Log out @{profile?.username || 'user'}</span>
+                  <span>Log out @{username || 'user'}</span>
                 </button>
               </div>
             )}
@@ -210,10 +156,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               className="w-full flex items-center justify-between p-2 lg:p-3 rounded-full hover:bg-zinc-900/50 cursor-pointer transition duration-150 select-none border border-transparent hover:border-zinc-800 justify-center lg:justify-between"
             >
               <div className="flex items-center gap-3">
-                <Avatar src={profile?.avatar_url} name={profile?.username || '?'} size={40} />
+                <Avatar src={avatarUrl} name={username || '?'} size={40} />
                 <div className="text-left leading-tight hidden lg:block">
-                  <p className="text-sm font-semibold text-white truncate max-w-[110px]">{profile?.username || 'User'}</p>
-                  <p className="text-xs text-gray-500 truncate max-w-[110px]">@{profile?.username || 'user'}</p>
+                  <p className="text-sm font-semibold text-white truncate max-w-[110px]">{username || 'User'}</p>
+                  <p className="text-xs text-gray-500 truncate max-w-[110px]">@{username || 'user'}</p>
                 </div>
               </div>
               <svg className="w-5 h-5 text-gray-500 hidden lg:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
@@ -224,7 +170,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         {/* MOBILE TOP HEADER */}
         <header className="md:hidden w-full h-[56px] fixed top-0 left-0 bg-[#0b0c10]/95 backdrop-blur-md border-b border-[#1e2230] px-4 flex items-center justify-between z-30">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center font-bold text-white uppercase text-xs" onClick={() => setShowProfileMenu(true)}>
-            {profile?.username ? profile.username.substring(0, 2) : 'FI'}
+            {username ? username.substring(0, 2) : 'FI'}
           </div>
           <h1 className="text-xl font-medium tracking-tight text-white select-none">
             FUT<span className="text-[#a855f7]">FI8</span>
@@ -280,7 +226,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             <div className="p-4 flex gap-3">
-              <Avatar src={profile?.avatar_url} name={profile?.username || '?'} size={36} />
+              <Avatar src={avatarUrl} name={username || '?'} size={36} />
               <div className="flex-1 space-y-4">
                 <textarea
                   value={modalPostContent}
@@ -298,10 +244,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   </div>
                   <button
                     onClick={handleCreatePostFromModal}
-                    disabled={submitting || !modalPostContent.trim()}
+                    disabled={isSubmitting || !modalPostContent.trim()}
                     className="px-6 py-2 bg-[#a855f7] hover:bg-[#9333ea] disabled:bg-purple-950/30 disabled:text-purple-400/40 text-white font-bold text-xs uppercase tracking-wider rounded-full transition duration-150"
                   >
-                    {submitting ? 'Posting...' : 'Drop Take'}
+                    {isSubmitting ? 'Posting...' : 'Drop Take'}
                   </button>
                 </div>
               </div>

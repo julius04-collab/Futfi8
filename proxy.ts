@@ -8,7 +8,11 @@ export default async function proxy(req: NextRequest) {
 
   const isRoot = pathname === '/'
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
-  const isStatic = pathname.startsWith('/_next') || pathname.startsWith('/images') || pathname.startsWith('/Images') || pathname === '/favicon.ico'
+  const isStatic =
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/images') ||
+    pathname.startsWith('/Images') ||
+    pathname === '/favicon.ico'
   const isApi = pathname.startsWith('/api')
 
   if (isRoot) {
@@ -35,7 +39,7 @@ export default async function proxy(req: NextRequest) {
     return res
   }
 
-  if (isPublic || isStatic || isApi) {
+  if (isStatic || isApi) {
     return NextResponse.next()
   }
 
@@ -60,11 +64,37 @@ export default async function proxy(req: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+
+  // ── AUTH ROUTES ──────────────────────────────────────────────────────────────
+  // Redirect authenticated users away from login/register to the locker room.
+  if (isPublic && user) {
+    return NextResponse.redirect(new URL('/locker-room', req.url))
+  }
+
+  // Public routes — allow through for unauthenticated users.
+  if (isPublic && !user) {
+    return res
+  }
+
+  // ── PROTECTED ROUTES ─────────────────────────────────────────────────────────
+  // Require authentication for everything else.
   if (!user) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
+  }
+
+  // ── ONBOARDING GUARD ─────────────────────────────────────────────────────────
+  // If the user is authenticated but has no home_club_id, force them to pick a team.
+  const { data: profile } = await supabase
+    .from('users')
+    .select('home_club_id')
+    .eq('id', user.id)
+    .single()
+
+  if (profile && !profile.home_club_id) {
+    return NextResponse.redirect(new URL('/pick-team', req.url))
   }
 
   return res

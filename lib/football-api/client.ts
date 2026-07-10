@@ -1,118 +1,121 @@
-/**
- * API-Football client wrapper.
- * All external football data calls go through this module.
- * Endpoint: https://v3.football.api-sports.io
- * Docs: https://www.api-football.com/documentation-v3
- */
+import { PREMIER_LEAGUE_CODE } from '@/lib/constants'
 
-import { PREMIER_LEAGUE_ID, PREMIER_LEAGUE_SEASON } from '@/lib/constants'
+export const CURRENT_SEASON = 2024
 
-const API_BASE = 'https://v3.football.api-sports.io'
+const API_BASE = 'https://api.football-data.org/v4'
 
-type ApiFootballResponse<T> = {
-  response: T[]
-  errors: Record<string, string>
-  results: number
-}
+export type MatchStatus = 'SCHEDULED' | 'TIMED' | 'IN_PLAY' | 'PAUSED' | 'FINISHED' | 'POSTPONED' | 'CANCELLED' | 'AWARDED' | 'SUSPENDED'
 
-type FixtureStatus = {
-  long: string
-  short: string
-  elapsed: number | null
-}
-
-type FixtureTeam = {
+export type FootballDataTeam = {
   id: number
   name: string
-  logo: string
+  shortName: string
+  tla: string
+  crest: string
 }
 
-type FixtureGoals = {
-  home: number | null
-  away: number | null
+export type FootballDataScore = {
+  winner: 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW' | null
+  fullTime: { home: number | null; away: number | null }
+  halfTime: { home: number | null; away: number | null }
 }
 
-export type Fixture = {
-  fixture: {
-    id: number
-    date: string
-    timestamp: number
-    status: FixtureStatus
-  }
-  teams: {
-    home: FixtureTeam
-    away: FixtureTeam
-  }
-  goals: FixtureGoals
+export type FootballDataMatch = {
+  id: number
+  utcDate: string
+  status: MatchStatus
+  matchday: number
+  stage: string
+  group: string | null
+  lastUpdated: string
+  homeTeam: FootballDataTeam
+  awayTeam: FootballDataTeam
+  score: FootballDataScore
 }
 
-async function apiRequest<T>(endpoint: string, params?: Record<string, string>): Promise<ApiFootballResponse<T>> {
-  const apiKey = process.env.FOOTBALL_API_KEY
+type MatchesResponse = {
+  count: number
+  competition: { id: number; name: string; code: string }
+  matches: FootballDataMatch[]
+}
+
+type TeamsResponse = {
+  count: number
+  competition: { id: number; name: string; code: string }
+  teams: FootballDataTeam[]
+}
+
+async function apiRequest<T>(endpoint: string): Promise<T> {
+  const apiKey = process.env.FOOTBALL_DATA_API_KEY
   if (!apiKey) {
-    throw new Error('FOOTBALL_API_KEY is not configured')
+    throw new Error('FOOTBALL_DATA_API_KEY is not configured')
   }
 
-  const url = new URL(`${API_BASE}${endpoint}`)
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.set(key, value)
-    })
-  }
-
-  const response = await fetch(url.toString(), {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
-      'x-rapidapi-key': apiKey,
-      'x-rapidapi-host': 'v3.football.api-sports.io',
+      'X-Auth-Token': apiKey,
     },
-    next: { revalidate: 0 }, // never cache API-Football responses
+    next: { revalidate: 0 },
   })
 
   if (!response.ok) {
-    throw new Error(`API-Football error: ${response.status} ${response.statusText}`)
+    const body = await response.text().catch(() => '')
+    throw new Error(`football-data.org error: ${response.status} ${response.statusText} — ${body}`)
   }
 
   return response.json()
 }
 
-/**
- * Get fixtures for a specific date (YYYY-MM-DD format).
- * Filters to Premier League only.
- */
-export async function getFixturesByDate(date: string): Promise<Fixture[]> {
-  const data = await apiRequest<Fixture>('/fixtures', {
-    league: String(PREMIER_LEAGUE_ID),
-    season: String(PREMIER_LEAGUE_SEASON),
-    date,
-  })
-  return data.response
+export async function getCompetitionMatches(
+  status?: MatchStatus | `${MatchStatus},${MatchStatus}`,
+  dateFrom?: string,
+  dateTo?: string,
+  limit: number = 50,
+): Promise<FootballDataMatch[]> {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  if (dateFrom) params.set('dateFrom', dateFrom)
+  if (dateTo) params.set('dateTo', dateTo)
+  if (limit) params.set('limit', String(limit))
+
+  const qs = params.toString()
+  const data = await apiRequest<MatchesResponse>(`/competitions/${PREMIER_LEAGUE_CODE}/matches${qs ? `?${qs}` : ''}`)
+  return data.matches
 }
 
-/**
- * Get all currently live Premier League fixtures.
- */
-export async function getLiveFixtures(): Promise<Fixture[]> {
-  const data = await apiRequest<Fixture>('/fixtures', {
-    league: String(PREMIER_LEAGUE_ID),
-    season: String(PREMIER_LEAGUE_SEASON),
-    live: 'all',
-  })
-  return data.response
+export async function getCompetitionTeams(): Promise<FootballDataTeam[]> {
+  const data = await apiRequest<TeamsResponse>(`/competitions/${PREMIER_LEAGUE_CODE}/teams`)
+  return data.teams
 }
 
-/**
- * Get a specific fixture by its API-Football fixture ID.
- */
-export async function getFixtureById(fixtureId: number): Promise<Fixture | null> {
-  const data = await apiRequest<Fixture>('/fixtures', {
-    id: String(fixtureId),
-  })
-  return data.response[0] ?? null
+export async function getTeamMatches(
+  teamId: number,
+  limit: number = 10,
+  status?: MatchStatus | `${MatchStatus},${MatchStatus}`,
+): Promise<FootballDataMatch[]> {
+  const params = new URLSearchParams()
+  if (limit) params.set('limit', String(limit))
+  if (status) params.set('status', status)
+
+  const qs = params.toString()
+  const data = await apiRequest<MatchesResponse>(`/teams/${teamId}/matches${qs ? `?${qs}` : ''}`)
+  return data.matches
 }
 
-/**
- * Get upcoming fixtures for the next N days.
- */
-export async function getUpcomingFixtures(days: number = 7): Promise<Fixture[]> {
+export async function getFixtureById(fixtureId: number): Promise<FootballDataMatch | null> {
+  try {
+    const data = await apiRequest<{ match: FootballDataMatch }>(`/matches/${fixtureId}`)
+    return data.match
+  } catch {
+    return null
+  }
+}
+
+export async function getLiveFixtures(): Promise<FootballDataMatch[]> {
+  return getCompetitionMatches('IN_PLAY,PAUSED')
+}
+
+export async function getUpcomingFixtures(days: number = 7): Promise<FootballDataMatch[]> {
   const today = new Date()
   const endDate = new Date(today)
   endDate.setDate(today.getDate() + days)
@@ -120,39 +123,43 @@ export async function getUpcomingFixtures(days: number = 7): Promise<Fixture[]> 
   const from = today.toISOString().split('T')[0]
   const to = endDate.toISOString().split('T')[0]
 
-  const data = await apiRequest<Fixture>('/fixtures', {
-    league: String(PREMIER_LEAGUE_ID),
-    season: String(PREMIER_LEAGUE_SEASON),
-    from,
-    to,
-  })
-  return data.response
+  return getCompetitionMatches('SCHEDULED,TIMED', from, to)
 }
 
-/**
- * Get teams for the current Premier League season.
- * Used during seeding to verify API-Football team IDs.
- */
-export async function getLeagueTeams(): Promise<{ team: { id: number; name: string } }[]> {
-  const data = await apiRequest<{ team: { id: number; name: string } }>('/teams', {
-    league: String(PREMIER_LEAGUE_ID),
-    season: String(PREMIER_LEAGUE_SEASON),
-  })
-  return data.response
+export async function getFixturesByDate(date: string): Promise<FootballDataMatch[]> {
+  return getCompetitionMatches(undefined, date, date)
 }
 
-/**
- * Determine if a fixture status means the match is finished.
- * API-Football status codes: FT (Full Time), AET (After Extra Time), PEN (Penalties).
- */
-export function isMatchFinished(statusShort: string): boolean {
-  return ['FT', 'AET', 'PEN'].includes(statusShort)
+export async function getTeamFixtures(teamId: number, limit: number = 5): Promise<FootballDataMatch[]> {
+  return getTeamMatches(teamId, limit, 'SCHEDULED,TIMED')
 }
 
-/**
- * Determine if a fixture status means the match is currently live.
- * API-Football status codes: 1H, HT, 2H, ET, BT, P, SUSP, INT, LIVE.
- */
-export function isMatchLive(statusShort: string): boolean {
-  return ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'SUSP', 'INT', 'LIVE'].includes(statusShort)
+export async function getLiveMatchesWidget(): Promise<FootballDataMatch[]> {
+  const apiKey = process.env.FOOTBALL_DATA_API_KEY
+  if (!apiKey) throw new Error('FOOTBALL_DATA_API_KEY is not configured')
+
+  const baseUrl = `${API_BASE}/competitions/${PREMIER_LEAGUE_CODE}/matches`
+  const headers = { 'X-Auth-Token': apiKey }
+
+  const liveRes = await fetch(`${baseUrl}?status=LIVE`, { headers, next: { revalidate: 60 } })
+  if (liveRes.ok) {
+    const data: MatchesResponse = await liveRes.json()
+    if (data.count > 0) return data.matches
+  }
+
+  const inPlayRes = await fetch(`${baseUrl}?status=IN_PLAY`, { headers, next: { revalidate: 60 } })
+  if (inPlayRes.ok) {
+    const data: MatchesResponse = await inPlayRes.json()
+    if (data.count > 0) return data.matches
+  }
+
+  return []
+}
+
+export function isMatchFinished(status: MatchStatus): boolean {
+  return status === 'FINISHED' || status === 'AWARDED'
+}
+
+export function isMatchLive(status: MatchStatus): boolean {
+  return status === 'IN_PLAY' || status === 'PAUSED'
 }

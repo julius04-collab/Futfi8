@@ -4,6 +4,23 @@ import { sendEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
+type RawPost = Record<string, unknown>
+
+function extractAuthor(p: RawPost): string | null {
+  const author = p.author
+  if (Array.isArray(author)) return (author[0] as { username?: string } | undefined)?.username ?? null
+  if (author && typeof author === 'object') return (author as { username?: string }).username ?? null
+  return null
+}
+
+function extractClubName(p: RawPost): string | null {
+  const lr = p.locker_room
+  const club = Array.isArray(lr) ? (lr[0] as { club?: unknown } | undefined)?.club : (lr as { club?: unknown } | undefined)?.club
+  if (Array.isArray(club)) return (club[0] as { name?: string } | undefined)?.name ?? null
+  if (club && typeof club === 'object') return (club as { name?: string }).name ?? null
+  return null
+}
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('Authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -35,14 +52,19 @@ export async function GET(req: NextRequest) {
     <h1>Weekly Hot Takes Digest</h1>
     <p>Top posts from the past 7 days:</p>
     <ul>
-      ${topPosts.map(p => `
+      ${topPosts.map((p: RawPost) => {
+        const authorName = extractAuthor(p) ?? 'Unknown'
+        const clubName = extractClubName(p) ?? 'Unknown'
+        const content = (p.content as string) ?? ''
+        const upvotes = (p.upvote_count as number) ?? 0
+        return `
         <li>
-          <strong>${(p.author as any)?.[0]?.username || 'Unknown'}</strong>
-          in <em>${(p.locker_room as any)?.[0]?.club?.name || 'Unknown'}</em>:
-          "${p.content.substring(0, 100)}${p.content.length > 100 ? '...' : ''}"
-          <br/><small>${p.upvote_count} upvotes</small>
-        </li>
-      `).join('')}
+          <strong>${authorName}</strong>
+          in <em>${clubName}</em>:
+          "${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"
+          <br/><small>${upvotes} upvotes</small>
+        </li>`
+      }).join('')}
     </ul>
   `
 
@@ -53,7 +75,7 @@ export async function GET(req: NextRequest) {
       await sendEmail({
         to: user.email,
         subject: 'Your Weekly Futfi8 Digest',
-        text: `Top posts this week:\n${topPosts.map((p, i) => `${i + 1}. "${p.content.substring(0, 100)}" — ${p.upvote_count} upvotes`).join('\n')}`,
+        text: `Top posts this week:\n${topPosts.map((p: RawPost, i: number) => `${i + 1}. "${(p.content as string)?.substring(0, 100) ?? ''}" — ${(p.upvote_count as number) ?? 0} upvotes`).join('\n')}`,
         html: digestHtml,
       })
       sent++

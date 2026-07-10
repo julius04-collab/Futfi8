@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
+import { getAuthToken } from '@/lib/supabase/get-auth-token'
+import { useCreatePost } from '@/hooks/use-create-post'
 import { PostCard } from '@/components/locker-room/PostCard'
 import { ComposeBox } from '@/components/locker-room/ComposeBox'
 import { Badge } from '@/components/ui/Badge'
@@ -161,9 +163,15 @@ export default function MatchThreadPage() {
   }, [matchId, offset])
 
   async function handleReact(postId: string, reactionType: string) {
+    const token = await getAuthToken()
+    if (!token) return
+
     const res = await fetch(`/api/posts/${postId}/react`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ type: reactionType }),
     })
     if (!res.ok) return
@@ -184,23 +192,18 @@ export default function MatchThreadPage() {
     )
   }
 
+  const { createPost } = useCreatePost()
+
   const handlePost = useCallback(async (content: string) => {
     if (!homeRoomId) return
-    const res = await fetch('/api/posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        locker_room_id: homeRoomId,
-        content,
-        type: 'match_thread',
-        match_id: matchId,
-      }),
+    const { success } = await createPost({
+      locker_room_id: homeRoomId,
+      content,
+      type: 'match_thread',
+      match_id: matchId,
     })
-    if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.error)
-    }
-  }, [homeRoomId, matchId])
+    if (!success) throw new Error('Failed to create post')
+  }, [homeRoomId, matchId, createPost])
 
   const isLive = match?.status === 'live'
   const isFinished = match?.status === 'finished'

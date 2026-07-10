@@ -8,62 +8,18 @@ import { supabase } from '@/lib/supabase/client'
 type Club = {
   id: string
   name: string
-  short: string
   abbr: string
   primary: string
   secondary: string
-  city: string
+  crest_url: string | null
 }
 
-const CLUBS: Club[] = [
-  { id: 'ars', name: 'Arsenal', short: 'Arsenal', abbr: 'ARS', primary: '#EF0107', secondary: '#063672', city: 'London' },
-  { id: 'avl', name: 'Aston Villa', short: 'Villa', abbr: 'AVL', primary: '#95BFE5', secondary: '#670E36', city: 'Birmingham' },
-  { id: 'bou', name: 'Bournemouth', short: 'Cherries', abbr: 'BOU', primary: '#DA291C', secondary: '#000000', city: 'Bournemouth' },
-  { id: 'bre', name: 'Brentford', short: 'Bees', abbr: 'BRE', primary: '#E30613', secondary: '#FBB800', city: 'London' },
-  { id: 'bha', name: 'Brighton', short: 'Seagulls', abbr: 'BHA', primary: '#0057B8', secondary: '#FFCD00', city: 'Brighton' },
-  { id: 'che', name: 'Chelsea', short: 'Chelsea', abbr: 'CHE', primary: '#034694', secondary: '#DBA111', city: 'London' },
-  { id: 'cov', name: 'Coventry City', short: 'Coventry', abbr: 'COV', primary: '#00B2A9', secondary: '#FFFFFF', city: 'Coventry' },
-  { id: 'cry', name: 'Crystal Palace', short: 'Palace', abbr: 'CRY', primary: '#1B458F', secondary: '#C4122E', city: 'London' },
-  { id: 'eve', name: 'Everton', short: 'Toffees', abbr: 'EVE', primary: '#003399', secondary: '#FFFFFF', city: 'Liverpool' },
-  { id: 'ful', name: 'Fulham', short: 'Cottagers', abbr: 'FUL', primary: '#000000', secondary: '#CC0000', city: 'London' },
-  { id: 'hul', name: 'Hull City', short: 'Hull', abbr: 'HUL', primary: '#FF9900', secondary: '#000000', city: 'Kingston upon Hull' },
-  { id: 'ips', name: 'Ipswich Town', short: 'Town', abbr: 'IPS', primary: '#003399', secondary: '#FFFFFF', city: 'Ipswich' },
-  { id: 'lee', name: 'Leeds United', short: 'Leeds', abbr: 'LEE', primary: '#FFCD00', secondary: '#1D428A', city: 'Leeds' },
-  { id: 'liv', name: 'Liverpool', short: 'Reds', abbr: 'LIV', primary: '#C8102E', secondary: '#00B2A9', city: 'Liverpool' },
-  { id: 'mci', name: 'Manchester City', short: 'City', abbr: 'MCI', primary: '#6CABDD', secondary: '#1C2C5B', city: 'Manchester' },
-  { id: 'mun', name: 'Manchester United', short: 'United', abbr: 'MUN', primary: '#DA291C', secondary: '#FBE122', city: 'Manchester' },
-  { id: 'new', name: 'Newcastle United', short: 'Magpies', abbr: 'NEW', primary: '#241F20', secondary: '#F1F1F1', city: 'Newcastle' },
-  { id: 'nfo', name: "Nottingham Forest", short: 'Forest', abbr: 'NFO', primary: '#DD0000', secondary: '#FFFFFF', city: 'Nottingham' },
-  { id: 'sun', name: 'Sunderland A.F.C.', short: 'Sunderland', abbr: 'SUN', primary: '#EB172B', secondary: '#000000', city: 'Sunderland' },
-  { id: 'tot', name: 'Tottenham Hotspur', short: 'Spurs', abbr: 'TOT', primary: '#132257', secondary: '#FFFFFF', city: 'London' },
-]
 
-const CREST_PATHS: Record<string, string> = {
-  ars: '/images/crests/arsenal.png',
-  avl: '/images/crests/aston-villa.png',
-  bou: '/images/crests/bournemouth.png',
-  bre: '/images/crests/brentford.png',
-  bha: '/images/crests/brighton.png',
-  che: '/images/crests/chelsea.png',
-  cov: '/images/crests/coventry-city.png',
-  cry: '/images/crests/crystal-palace.png',
-  eve: '/images/crests/everton.png',
-  ful: '/images/crests/fulham.png',
-  hul: '/images/crests/hull-city.png',
-  ips: '/images/crests/ipswich-town.png',
-  lee: '/images/crests/leeds-united.png',
-  liv: '/images/crests/liverpool.png',
-  mci: '/images/crests/manchester-city.png',
-  mun: '/images/crests/manchester-united.png',
-  new: '/images/crests/newcastle-united.png',
-  nfo: '/images/crests/nottingham-forest.png',
-  sun: '/images/crests/sunderland.png',
-  tot: '/images/crests/tottenham-hotspur.png',
-}
+
+
 
 function ClubCrest({ club, size = 44 }: { club: Club; size?: number }) {
   const [imgError, setImgError] = useState(false)
-  const crestPath = CREST_PATHS[club.id]
 
   return (
     <div
@@ -71,15 +27,15 @@ function ClubCrest({ club, size = 44 }: { club: Club; size?: number }) {
       style={{
         width: size,
         height: size,
-        background: !crestPath || imgError
+        background: !club.crest_url || imgError
           ? `linear-gradient(135deg, ${club.primary} 0%, ${club.secondary} 100%)`
           : 'transparent',
       }}
       aria-label={club.name}
     >
-      {crestPath && !imgError ? (
+      {club.crest_url && !imgError ? (
         <img
-          src={crestPath}
+          src={club.crest_url}
           alt={club.name}
           className="w-full h-full object-contain"
           onError={() => setImgError(true)}
@@ -167,7 +123,7 @@ function Nav() {
   )
 }
 
-function Hero() {
+function Hero({ clubs }: { clubs: Club[] }) {
   return (
     <section
       id="top"
@@ -226,7 +182,7 @@ function Hero() {
       <div className="border-y border-slate-800/60 bg-black/30 py-3 overflow-hidden">
         <div className="marquee flex w-max items-center gap-10 whitespace-nowrap font-display text-lg uppercase tracking-wider text-slate-500">
           {Array.from({ length: 2 }).flatMap((_, i) =>
-            CLUBS.map((c) => (
+            clubs.map((c) => (
               <span key={`${i}-${c.id}`} className="flex items-center gap-3">
                 <ClubCrest club={c} size={26} />
                 {c.name}
@@ -309,9 +265,9 @@ function RaidSection() {
   )
 }
 
-function RoomsSection() {
+function RoomsSection({ clubs }: { clubs: Club[] }) {
   const [selected, setSelected] = useState<string>('')
-  const chosen = useMemo(() => CLUBS.find((c) => c.id === selected), [selected])
+  const chosen = useMemo(() => clubs.find((c) => c.id === selected), [clubs, selected])
 
   return (
     <section id="rooms" className="relative border-b border-slate-800/60 bg-black py-24 sm:py-32">
@@ -331,7 +287,7 @@ function RoomsSection() {
         </div>
 
         <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {CLUBS.map((club) => {
+          {clubs.map((club) => {
             const isSelected = selected === club.id
             return (
               <button
@@ -357,7 +313,7 @@ function RoomsSection() {
                 </div>
                 <div className="mt-4">
                   <div className="font-display text-xl text-white leading-tight">{club.name}</div>
-                  <div className="mt-1 text-xs text-slate-500">{club.city}</div>
+
                 </div>
                 <div className="mt-4 flex items-center justify-between text-[10px] font-mono uppercase tracking-widest">
                   <span className="text-slate-600">Locker room</span>
@@ -370,7 +326,7 @@ function RoomsSection() {
           })}
         </div>
 
-        {chosen && (
+                {chosen && (
           <div className="mt-8 rounded-sm border border-accent-muted/30 bg-accent-muted/5 p-5 text-center">
             <p className="text-sm text-slate-400">
               You picked <span className="font-bold text-white">{chosen.name}</span>.{' '}
@@ -425,22 +381,9 @@ function FanCredSection() {
               <div className="font-mono text-[10px] uppercase tracking-widest text-slate-500">Wk 14</div>
             </div>
 
-            <ol className="mt-4 divide-y divide-slate-800/60">
-              {[
-                { rank: 1, user: 'kojo_gunner', cred: 2410, tag: 'Legend' },
-                { rank: 2, user: 'afolabi_AFC', cred: 1880, tag: 'Captain' },
-                { rank: 3, user: 'nneka.10', cred: 1325, tag: 'Captain' },
-                { rank: 4, user: 'tega_north', cred: 940, tag: 'OG' },
-                { rank: 5, user: 'you?', cred: 0, tag: '—' },
-              ].map((r) => (
-                <li key={r.rank} className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-4 py-3">
-                  <span className="font-display text-2xl text-accent-muted">{r.rank}</span>
-                  <span className="text-sm text-white">@{r.user}</span>
-                  <span className="font-mono text-xs uppercase tracking-widest text-slate-500">{r.tag}</span>
-                  <span className="font-display text-lg text-white">{r.cred.toLocaleString()}</span>
-                </li>
-              ))}
-            </ol>
+            <div className="mt-4 rounded-sm border border-slate-800/60 bg-black/60 p-6 text-center">
+              <p className="text-sm text-slate-400">No leaderboard data yet. Be the first to earn Fan Cred.</p>
+            </div>
 
             <div className="mt-6 border-t border-slate-800/60 pt-6">
               <div className="font-mono text-[10px] uppercase tracking-widest text-slate-500">Milestones</div>
@@ -461,12 +404,29 @@ function FanCredSection() {
   )
 }
 
-function HotTakeSection() {
-  const HOT_TAKES = [
-    { user: 'nneka.10', club: 'ars', body: 'Saka for Ballon d\'Or top 3. Argue with the wall.', up: 482 },
-    { user: 'tegz_KOP', club: 'liv', body: 'Anfield on a European night is still the best atmosphere in world football. Madrid is karaoke.', up: 396 },
-    { user: 'afobaje', club: 'che', body: 'Cole Palmer is the most complete English 10 since Gazza. Pack it up.', up: 311 },
-  ]
+function HotTakeSection({ clubs }: { clubs: Club[] }) {
+  const [takes, setTakes] = useState<{ user: string; club_id: string; body: string; up: number }[]>([])
+  const [takesLoading, setTakesLoading] = useState(true)
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('posts')
+        .select(`id, content, upvote_count, author:users!author_id(username, home_club_id)`)
+        .eq('type', 'hot_take')
+        .order('upvote_count', { ascending: false })
+        .limit(6)
+      if (data) {
+        setTakes(data.map((p: any) => ({
+          user: p.author?.username ?? 'anonymous',
+          club_id: p.author?.home_club_id ?? '',
+          body: p.content,
+          up: p.upvote_count ?? 0,
+        })))
+      }
+      setTakesLoading(false)
+    })()
+  }, [])
 
   return (
     <section id="hot" className="relative border-b border-slate-800/60 bg-black py-24 sm:py-32">
@@ -497,32 +457,41 @@ function HotTakeSection() {
         </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {HOT_TAKES.map((t, i) => {
-            const club = CLUBS.find((c) => c.id === t.club)!
-            return (
-              <article key={i} className="group flex flex-col justify-between gap-4 rounded-sm border border-slate-800/60 bg-slate-900/50 p-5 transition hover:border-accent-muted/50">
-                <div className="flex items-center gap-3">
-                  <ClubCrest club={club} size={36} />
-                  <div>
-                    <div className="text-sm text-white">@{t.user}</div>
-                    <div className="font-mono text-[10px] uppercase tracking-widest text-slate-500">{club.name}</div>
+          {takesLoading ? (
+            <p className="col-span-full text-sm text-slate-500">Loading takes...</p>
+          ) : takes.length === 0 ? (
+            <div className="col-span-full rounded-sm border border-slate-800/60 bg-slate-900/50 p-8 text-center">
+              <p className="text-sm text-slate-400">No hot takes yet. Drop the first one in the Hot Take Board.</p>
+            </div>
+          ) : (
+            takes.map((t, i) => {
+              const club = clubs.find((c) => c.id === t.club_id) ?? clubs[0]
+              if (!club) return null
+              return (
+                <article key={i} className="group flex flex-col justify-between gap-4 rounded-sm border border-slate-800/60 bg-slate-900/50 p-5 transition hover:border-accent-muted/50">
+                  <div className="flex items-center gap-3">
+                    <ClubCrest club={club} size={36} />
+                    <div>
+                      <div className="text-sm text-white">@{t.user}</div>
+                      <div className="font-mono text-[10px] uppercase tracking-widest text-slate-500">{club.name ?? ''}</div>
+                    </div>
                   </div>
-                </div>
-                <p className="font-display text-xl font-normal leading-snug text-white">&ldquo;{t.body}&rdquo;</p>
-                <div className="flex items-center justify-between border-t border-slate-800/60 pt-3 font-mono text-[11px] uppercase tracking-widest text-slate-500">
-                  <span className="flex items-center gap-1.5"><span className="text-accent-muted">▲</span> {t.up}</span>
-                  <span>🔥 · 😂 · 💀</span>
-                </div>
-              </article>
-            )
-          })}
+                  <p className="font-display text-xl font-normal leading-snug text-white">&ldquo;{t.body}&rdquo;</p>
+                  <div className="flex items-center justify-between border-t border-slate-800/60 pt-3 font-mono text-[11px] uppercase tracking-widest text-slate-500">
+                    <span className="flex items-center gap-1.5"><span className="text-accent-muted">▲</span> {t.up}</span>
+                    <span>🔥 · 😂 · 💀</span>
+                  </div>
+                </article>
+              )
+            })
+          )}
         </div>
       </div>
     </section>
   )
 }
 
-function WaitlistSection() {
+function WaitlistSection({ clubs }: { clubs: Club[] }) {
   const [club, setClub] = useState<string>('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -530,7 +499,7 @@ function WaitlistSection() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
-  const chosen = useMemo(() => CLUBS.find((c) => c.id === club), [club])
+  const chosen = useMemo(() => clubs.find((c) => c.id === club), [clubs, club])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -605,7 +574,7 @@ function WaitlistSection() {
               <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent-muted">Confirmed</div>
               <ClubCrest club={chosen} size={72} />
               <h3 className="font-display text-4xl text-white leading-tight">
-                You&apos;re in the {chosen.short} room.
+                You&apos;re in the {chosen.name} room.
               </h3>
               <p className="text-sm text-slate-400">
                 We&apos;ll hit <span className="text-white">{email}</span> the moment the room opens. Sharpen your takes.
@@ -624,7 +593,7 @@ function WaitlistSection() {
                   01 · Your home club
                 </label>
                 <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
-                  {CLUBS.map((c) => (
+                  {clubs.map((c) => (
                     <button
                       type="button"
                       key={c.id}
@@ -743,6 +712,7 @@ function Footer() {
 
 export default function LandingPage() {
   const router = useRouter()
+  const [clubs, setClubs] = useState<Club[]>([])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -752,16 +722,34 @@ export default function LandingPage() {
     })
   }, [router])
 
+  useEffect(() => {
+    supabase
+      .from('clubs')
+      .select('id, name, short_name, primary_color, secondary_color, crest_url')
+      .then(({ data }) => {
+        if (data) {
+          setClubs(data.map((c) => ({
+            id: c.id,
+            name: c.name,
+            abbr: c.short_name,
+            primary: c.primary_color,
+            secondary: c.secondary_color,
+            crest_url: c.crest_url,
+          })))
+        }
+      })
+  }, [])
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Nav />
       <main>
-        <Hero />
+        <Hero clubs={clubs} />
         <RaidSection />
-        <RoomsSection />
+        <RoomsSection clubs={clubs} />
         <FanCredSection />
-        <HotTakeSection />
-        <WaitlistSection />
+        <HotTakeSection clubs={clubs} />
+        <WaitlistSection clubs={clubs} />
       </main>
       <Footer />
     </div>

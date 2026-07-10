@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/auth/getAuthUser'
+import { getHomeClubServer } from '@/lib/get-home-club-server'
 import { UUID_REGEX } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
@@ -13,11 +14,13 @@ export async function GET(req: NextRequest) {
 
   const { data: profile } = await supabaseAdmin
     .from('users')
-    .select('*, home_club:clubs!home_club_id(*)')
+    .select('*')
     .eq('id', user.id)
     .single()
 
-  return NextResponse.json({ profile })
+  const { homeClub } = await getHomeClubServer(user.id)
+
+  return NextResponse.json({ profile: { ...profile, home_club: homeClub } })
 }
 
 export async function PATCH(req: NextRequest) {
@@ -46,7 +49,7 @@ export async function PATCH(req: NextRequest) {
     .from('users')
     .update(updates)
     .eq('id', user.id)
-    .select('*, home_club:clubs!home_club_id(*)')
+    .select('*')
     .single()
 
   if (error) {
@@ -56,5 +59,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ profile })
+  const { homeClub } = await getHomeClubServer(user.id)
+
+  return NextResponse.json({ profile: { ...profile, home_club: homeClub } })
 }

@@ -136,7 +136,7 @@ export async function getTeamFixtures(teamId: number, limit: number = 5): Promis
 
 export async function getLiveMatchesWidget(): Promise<FootballDataMatch[]> {
   const apiKey = process.env.FOOTBALL_DATA_API_KEY
-  if (!apiKey) throw new Error('FOOTBALL_DATA_API_KEY is not configured')
+  if (!apiKey) return []
 
   const baseUrl = `${API_BASE}/competitions/${PREMIER_LEAGUE_CODE}/matches`
   const headers = { 'X-Auth-Token': apiKey }

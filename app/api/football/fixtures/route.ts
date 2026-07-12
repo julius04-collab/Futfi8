@@ -29,6 +29,11 @@ function statusDisplay(status: string): string {
 }
 
 export async function GET(req: NextRequest) {
+  if (!process.env.FOOTBALL_DATA_API_KEY) {
+    console.error('[FOOTBALL API] FOOTBALL_DATA_API_KEY is not set')
+    return NextResponse.json({ fixtures: [], teamId: null })
+  }
+
   const { searchParams } = new URL(req.url)
   const clubId = searchParams.get('club_id')
 
@@ -97,6 +102,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ fixtures: enriched, teamId })
   } catch (err) {
     console.error('[FOOTBALL FIXTURES] Error:', err)
-    return NextResponse.json({ error: 'Failed to fetch fixtures' }, { status: 500 })
+    return NextResponse.json({ fixtures: [], teamId: null })
   }
 }

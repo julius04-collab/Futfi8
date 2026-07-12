@@ -4,6 +4,32 @@ export const CURRENT_SEASON = 2024
 
 const API_BASE = 'https://api.football-data.org/v4'
 
+const cache = new Map<string, { data: unknown; expiresAt: number }>()
+const CACHE_TTL = 60 * 60 * 1000 // 1 hour
+
+export const CLUB_NAME_TO_FD_TEAM_ID: Record<string, number> = {
+  'arsenal': 57,
+  'aston villa': 58,
+  'bournemouth': 1044,
+  'brentford': 402,
+  'brighton & hove albion': 397,
+  'chelsea': 61,
+  'crystal palace': 354,
+  'everton': 62,
+  'fulham': 63,
+  'ipswich town': 356,
+  'leicester city': 338,
+  'liverpool': 64,
+  'manchester city': 65,
+  'manchester united': 66,
+  'newcastle united': 67,
+  'nottingham forest': 351,
+  'southampton': 340,
+  'tottenham hotspur': 73,
+  'west ham united': 563,
+  'wolverhampton wanderers': 76,
+}
+
 export type MatchStatus = 'SCHEDULED' | 'TIMED' | 'IN_PLAY' | 'PAUSED' | 'FINISHED' | 'POSTPONED' | 'CANCELLED' | 'AWARDED' | 'SUSPENDED'
 
 export type FootballDataTeam = {
@@ -46,6 +72,11 @@ type TeamsResponse = {
 }
 
 async function apiRequest<T>(endpoint: string): Promise<T> {
+  const cached = cache.get(endpoint)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data as T
+  }
+
   const apiKey = process.env.FOOTBALL_DATA_API_KEY
   if (!apiKey) {
     throw new Error('FOOTBALL_DATA_API_KEY is not configured')
@@ -55,15 +86,28 @@ async function apiRequest<T>(endpoint: string): Promise<T> {
     headers: {
       'X-Auth-Token': apiKey,
     },
-    next: { revalidate: 0 },
+    next: { revalidate: 3600 },
   })
+
+  if (response.status === 429) {
+    const stale = cache.get(endpoint)
+    if (stale) return stale.data as T
+    return null as T
+  }
 
   if (!response.ok) {
     const body = await response.text().catch(() => '')
     throw new Error(`football-data.org error: ${response.status} ${response.statusText} — ${body}`)
   }
 
-  return response.json()
+  const result = await response.json()
+
+  cache.set(endpoint, {
+    data: result,
+    expiresAt: Date.now() + CACHE_TTL,
+  })
+
+  return result as T
 }
 
 export async function getCompetitionMatches(
@@ -80,12 +124,12 @@ export async function getCompetitionMatches(
 
   const qs = params.toString()
   const data = await apiRequest<MatchesResponse>(`/competitions/${PREMIER_LEAGUE_CODE}/matches${qs ? `?${qs}` : ''}`)
-  return data.matches
+  return data?.matches ?? []
 }
 
 export async function getCompetitionTeams(): Promise<FootballDataTeam[]> {
   const data = await apiRequest<TeamsResponse>(`/competitions/${PREMIER_LEAGUE_CODE}/teams`)
-  return data.teams
+  return data?.teams ?? []
 }
 
 export async function getTeamMatches(
@@ -99,13 +143,13 @@ export async function getTeamMatches(
 
   const qs = params.toString()
   const data = await apiRequest<MatchesResponse>(`/teams/${teamId}/matches${qs ? `?${qs}` : ''}`)
-  return data.matches
+  return data?.matches ?? []
 }
 
 export async function getFixtureById(fixtureId: number): Promise<FootballDataMatch | null> {
   try {
     const data = await apiRequest<{ match: FootballDataMatch }>(`/matches/${fixtureId}`)
-    return data.match
+    return data?.match ?? null
   } catch {
     return null
   }
@@ -135,22 +179,40 @@ export async function getTeamFixtures(teamId: number, limit: number = 5): Promis
 }
 
 export async function getLiveMatchesWidget(): Promise<FootballDataMatch[]> {
+  const cacheKey = 'live-matches-widget'
+  const cached = cache.get(cacheKey)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data as FootballDataMatch[]
+  }
+
   const apiKey = process.env.FOOTBALL_DATA_API_KEY
   if (!apiKey) return []
 
   const baseUrl = `${API_BASE}/competitions/${PREMIER_LEAGUE_CODE}/matches`
   const headers = { 'X-Auth-Token': apiKey }
 
-  const liveRes = await fetch(`${baseUrl}?status=LIVE`, { headers, next: { revalidate: 60 } })
+  const liveRes = await fetch(`${baseUrl}?status=LIVE`, { headers, next: { revalidate: 3600 } })
+  if (liveRes.status === 429) {
+    return (cache.get(cacheKey)?.data as FootballDataMatch[]) ?? []
+  }
   if (liveRes.ok) {
     const data: MatchesResponse = await liveRes.json()
-    if (data.count > 0) return data.matches
+    if (data.count > 0) {
+      cache.set(cacheKey, { data: data.matches, expiresAt: Date.now() + CACHE_TTL })
+      return data.matches
+    }
   }
 
-  const inPlayRes = await fetch(`${baseUrl}?status=IN_PLAY`, { headers, next: { revalidate: 60 } })
+  const inPlayRes = await fetch(`${baseUrl}?status=IN_PLAY`, { headers, next: { revalidate: 3600 } })
+  if (inPlayRes.status === 429) {
+    return (cache.get(cacheKey)?.data as FootballDataMatch[]) ?? []
+  }
   if (inPlayRes.ok) {
     const data: MatchesResponse = await inPlayRes.json()
-    if (data.count > 0) return data.matches
+    if (data.count > 0) {
+      cache.set(cacheKey, { data: data.matches, expiresAt: Date.now() + CACHE_TTL })
+      return data.matches
+    }
   }
 
   return []

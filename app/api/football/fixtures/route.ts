@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { getCompetitionMatches, getCompetitionTeams } from '@/lib/football-api/client'
+import { getCompetitionMatches, CLUB_NAME_TO_FD_TEAM_ID } from '@/lib/football-api/client'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 async function resolveClubTeamId(clubId: string, clubName: string): Promise<number | null> {
   const { data: club } = await supabaseAdmin
@@ -13,16 +13,13 @@ async function resolveClubTeamId(clubId: string, clubName: string): Promise<numb
 
   if (club?.football_data_team_id) return club.football_data_team_id
 
-  const teams = await getCompetitionTeams()
-  const match = teams.find(
-    (t) =>
-      t.name.toLowerCase().includes(clubName.toLowerCase()) ||
-      clubName.toLowerCase().includes(t.name.toLowerCase()),
-  )
-  if (!match) return null
+  const fdTeamId = CLUB_NAME_TO_FD_TEAM_ID[clubName.toLowerCase()]
+  if (fdTeamId) {
+    await supabaseAdmin.from('clubs').update({ football_data_team_id: fdTeamId }).eq('id', clubId)
+    return fdTeamId
+  }
 
-  await supabaseAdmin.from('clubs').update({ football_data_team_id: match.id }).eq('id', clubId)
-  return match.id
+  return null
 }
 
 function statusDisplay(status: string): string {
